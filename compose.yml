@@ -1,0 +1,10 @@
+services:
+  apple-dl:
+    build: .
+    container_name: apple-dl
+    image: f8ith/apple-dl:stable
+    ports:
+      - "127.0.0.1:6887:6887"
+    volumes:
+      - ./appledl-docker:/config
+      - /mnt/media-server/ingest/music:/downloads

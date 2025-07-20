@@ -3,6 +3,8 @@ from typing import Callable, cast, Tuple
 
 import socketio
 
+from ..config import config
+
 old_on = socketio.AsyncServer.on
 
 # Gets rid of the type error in the decorator
@@ -17,12 +19,7 @@ sio: TypedAsyncServer = cast(
         async_mode="asgi",
         logger=False,
         engineio_logger=False,
-        cors_allowed_origins=[
-            "http://localhost:5001",
-            "http://127.0.0.1:5001",
-            "http://127.0.0.1:5000",
-            "http://localhost:6887",
-        ],
+        cors_allowed_origins=config.ALLOW_ORIGINS,
     ),
 )
 

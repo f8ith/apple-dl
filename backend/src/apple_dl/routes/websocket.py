@@ -1,11 +1,12 @@
 from logging import getLogger
-from typing import Callable, cast, Tuple
+from typing import Any, Callable, cast, Tuple
 
 import socketio
 
-from ..config import config
+from ..config import cfg
 
 old_on = socketio.AsyncServer.on
+
 
 # Gets rid of the type error in the decorator
 class TypedAsyncServer(socketio.AsyncServer):
@@ -19,7 +20,7 @@ sio: TypedAsyncServer = cast(
         async_mode="asgi",
         logger=False,
         engineio_logger=False,
-        cors_allowed_origins=config.ALLOW_ORIGINS,
+        cors_allowed_origins=cfg.ALLOW_ORIGINS,
     ),
 )
 
@@ -27,6 +28,10 @@ sio: TypedAsyncServer = cast(
 async def notify_job_done(_: int) -> None:
     getLogger("quart.app").info("job done")
     await sio.emit("status_update")
+
+async def player_state_changed(data: dict[str, Any]) -> None:
+    getLogger("quart.app").info("player state changed")
+    await sio.emit("player_state_changed", data)
 
 
 def register_socketio(app):

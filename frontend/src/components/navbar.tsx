@@ -1,27 +1,46 @@
-import Link from "./link";
-import { useCurrentRoute } from "./route";
+import { Link, useRouterState } from "@tanstack/react-router";
 
 const Navbar = () => {
-  const { currentPath } = useCurrentRoute();
+  const location = useRouterState({ select: (s) => s.location });
+
   return (
-    <div className="flex flex-row items-start justify-start max-h-sm p-8 gap-8">
+    <div className="flex flex-row items-start justify-center max-h-[8vh] p-8 gap-8 w-full">
       <Link
-        href="/"
+        to="/search"
         className={
           "text-xl " +
-          (currentPath === "/" ? "text-white-500" : "text-gray-500")
+          (location.href.startsWith("/search")
+            ? "text-white-500"
+            : "text-gray-500")
         }
       >
         search
       </Link>
       <Link
-        href="/jobs"
+        to="/jobs"
         className={
           "text-xl " +
-          (currentPath === "/jobs" ? "text-white-500" : "text-gray-500")
+          (location.href.startsWith("/jobs")
+            ? "text-white-500"
+            : "text-gray-500")
         }
       >
         jobs
+      </Link>
+      <Link
+        to="/discord-bot"
+        className={
+          "text-xl " +
+          (location.href.startsWith("/discord-bot")
+            ? "text-white-500"
+            : "text-gray-500")
+        }
+        search={{
+          guild_id: null,
+          player_id: null,
+        }}
+      >
+        discord
       </Link>
     </div>
   );

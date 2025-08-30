@@ -1,44 +1,35 @@
-from attr import define
+from enum import Enum
+from typing import Any
 
-from apple_dl.schemas.job_schemas import GamdlJobSchema
-from apple_dl.discord_bot.player import DiscordPlayerModes, DiscordPlayerState, Song
+from pydantic import BaseModel
 
+class DiscordPlayerModes(str, Enum):
+    normal = "normal"
+    repeat = "repeat"
+    loop = "loop"
 
-@define
-class SongSchema(GamdlJobSchema):
+class SongSchema(BaseModel):
+    id: int
     job_id: int
+    album_name: str | None
+    artist_name: str | None
+    name: str
+    attributes: dict[str, Any]
+    url: str
+    image: str | None
+    type: str
+    status: str
 
-    @classmethod
-    def from_song(cls, song: "Song"):
-        new_cls = cls(**GamdlJobSchema.from_job(song.gamdl_job).attributes)
-        new_cls.job_id = new_cls.id
-        new_cls.id = song.id
-        return new_cls
-
-
-@define
-class PlayerStateSchema:
+class PlayerStateSchema(BaseModel):
     guild_name: str
     channel_name: str
     current_song: SongSchema | None
+    song_length: int
+    song_played: int
     is_paused: bool
     volume: float
-    mode: "DiscordPlayerModes"
+    mode: DiscordPlayerModes
     owner_name: str
 
-    @classmethod
-    def from_player_state(cls, player: "DiscordPlayerState"):
-        return cls(
-            player.guild.name,
-            player.voice_client.channel.name,
-            SongSchema.from_song(player.current_song) if player.current_song else None,
-            player.voice_client.is_paused(),
-            player.volume,
-            player.mode,
-            player.owner.name,
-        )
-
-
-@define
 class PlayerStateResp:
     player_state: PlayerStateSchema

@@ -4,9 +4,12 @@ from logging import getLogger
 from os import PathLike
 from typing import List, Tuple
 
-from .config import cfg
+from apple_dl.schemas.job_schemas import GamdlJobResultSchema, GamdlJobSchema
+
 from .apple_music_api import apple_music, downloader
-from .routes.websocket import notify_job_done
+from .config import cfg
+from .logger import logger
+from .routers.websocket import notify_job_done
 
 
 class GamdlJob:
@@ -44,6 +47,29 @@ class GamdlJob:
         self.job_completed = asyncio.Event()
         self.job_result: GamdlJobResult | None = None
 
+    def __pydantic__(self):
+        ret = GamdlJobSchema(
+            id=self.id,
+            album_name=self.album_name,
+            artist_name=self.artist_name,
+            name=self.name,
+            attributes=self.media_info["attributes"],
+            url=self.url,
+            image=(self.media_info.get("attributes", {}).get("artwork" ,{})).get("url"),
+            type=self.url_type,
+            status="pending",
+            stdout=None,
+            stderr=None,
+        )
+
+        if self.job_result:
+            job_result = self.job_result.__pydantic__()
+            ret.status = job_result.status
+            ret.stdout = job_result.stdout
+            ret.stderr = job_result.stderr
+
+        return ret
+
     def __json__(self):
         ret = {
             "id": self.id,
@@ -70,6 +96,15 @@ class GamdlJobResult:
         self.stdout: bytes = result[1]
         self.stderr: bytes = result[2]
 
+    def __pydantic__(self):
+        if self.returncode != 0:
+            status = "failed"
+        else:
+            status = "done"
+
+        return GamdlJobResultSchema(status=status, stdout=self.stdout.decode(), stderr=self.stderr.decode())
+
+
     def __json__(self):
         ret: dict[str, str] = {}
         if self.returncode != 0:
@@ -90,8 +125,8 @@ consumers = []
 async def download_url(
     url: str, output_path: PathLike | None = None
 ) -> Tuple[int, bytes, bytes]:
-    # TODO: using gamdl directly from the commandline is extremely unreliable. write my own function
-    getLogger("quart.app").info(f"downloading {url}")
+    # TODO: using gamdl directly from the commandline is extremely unreliable. write my own function + language issues cause path to resolve incorrectly
+    logger.info(f"downloading {url}")
     gamdl_config_path = cfg.GAMDL_DIR / "config.json"
 
     cmd = f"gamdl {url} --config-path={gamdl_config_path}"

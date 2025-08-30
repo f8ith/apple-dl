@@ -1,11 +1,13 @@
 import asyncio
-from logging import getLogger
+
+import discord
+from discord.ext import commands
+
 from apple_dl.config import cfg
 from apple_dl.discord_bot.bot import DiscordBot
 from apple_dl.discord_bot.player import DiscordPlayerManager
 from apple_dl.discord_bot.utils import PACKAGE_PATH, get_extension
-import discord
-from discord.ext import commands
+from apple_dl.logger import logger
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -18,7 +20,7 @@ async def run_bot():
         try:
             await bot.load_extension(get_extension(extension), package=PACKAGE_PATH)
         except Exception as e:
-            getLogger("quart.discord_bot").error(
+            logger.error(
                 "Failed to load extension {} because of error {}.".format(extension, e)
             )
 

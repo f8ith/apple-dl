@@ -1,7 +1,6 @@
-import logging
-from logging.config import dictConfig
+import logging.config
 
-dictConfig(
+logging.config.dictConfig(
     {
         "version": 1,
         "formatters": {
@@ -21,6 +20,7 @@ dictConfig(
     }
 )
 
+logger = logging.getLogger("apple_dl")
 
 def load_logging() -> None:
     ...

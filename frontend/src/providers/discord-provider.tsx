@@ -15,8 +15,8 @@ export default function DiscordProvider({ children }: DiscordProviderProps) {
   const [playerState, setPlayerState] = useState(null);
 
   const [headers] = useState({
-    guild_id: guildId,
-    player_id: playerId,
+    "guild-id": guildId,
+    "player-id": playerId,
   });
 
   const enabledItemTypes: TItemType[] = ["songs"];
@@ -28,7 +28,7 @@ export default function DiscordProvider({ children }: DiscordProviderProps) {
     if (discordEnabled) return;
 
     const fetchPlayerState = async () => {
-      const result = await axios.get("/api/discord/player_state", { headers });
+      const result = await axios.get("/api/v1/discord/player_state", { headers });
       setPlayerState(result.data);
 
       setDiscordEnabled(true);
@@ -40,7 +40,7 @@ export default function DiscordProvider({ children }: DiscordProviderProps) {
       setPlayerState(new_state);
     }
 
-    registerHandler("player_state_update", onPlayerStateChange);
+    registerHandler("player_state_changed", onPlayerStateChange);
   };
 
   const disconnect = () => {

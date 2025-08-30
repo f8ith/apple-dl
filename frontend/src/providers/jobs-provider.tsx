@@ -12,14 +12,14 @@ export default function JobsProvider({ children }: JobsProviderProps) {
   const { registerHandler } = useSocket();
 
   const getJobs = useCallback(async () => {
-    const result = await axios.get("/api/jobs");
+    const result = await axios.get("/api/v1/jobs/all");
     setJobs(result.data);
 
     return jobs;
   }, []);
 
   const submitJob = useCallback(async (url: string) => {
-    const result = await axios.post("/api/submit_job", { url: url });
+    const result = await axios.put("/api/v1/jobs/submit", { url: url });
     return { data: result.data, status: result.status };
   }, []);
 

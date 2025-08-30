@@ -4,24 +4,19 @@ from dataclasses import dataclass
 from enum import Enum
 import itertools
 from pathlib import Path
+from re import I
 from typing import Deque
 
 import discord
 from discord import Member, Guild, VoiceClient
 from discord.ext import commands
 
-from apple_dl import cfg
+from apple_dl.config import cfg
 from apple_dl.discord_bot.utils import send_public
 from apple_dl.jobs import GamdlJob
-from apple_dl.routes.websocket import player_state_changed
+from apple_dl.routers.websocket import player_state_changed
+from apple_dl.schemas.discord_schemas import PlayerStateSchema, SongSchema, DiscordPlayerModes
 from apple_dl.utils import truncated_uuid4
-
-
-class DiscordPlayerModes(str, Enum):
-    normal = "normal"
-    repeat = "repeat"
-    loop = "loop"
-
 
 class Song:
     id_iter = itertools.count()
@@ -29,13 +24,28 @@ class Song:
     def __init__(self, gamdl_job: GamdlJob):
         # TODO: Handle albums, playlists etc.
         self.id = next(self.id_iter)
+        self.job_id = gamdl_job.id
         self.gamdl_job = gamdl_job
-        assert self.gamdl_job.output_path
+        self.url = gamdl_job.url
+
+        self.attributes = gamdl_job.media_info["attributes"]
+        self.album_name = gamdl_job.album_name
+        self.artist_name = gamdl_job.artist_name
+        self.name = gamdl_job.name
+        self.has_lyrics = gamdl_job.has_lyrics
+        self.has_time_synced_lyrics = gamdl_job.has_time_synced_lyrics
+        self.track_number = gamdl_job.track_number
+        self.type = gamdl_job.url_type
+        self.output_path = gamdl_job.output_path
+        self.job_completed = gamdl_job.job_completed
+        self.job_result = gamdl_job.job_result
+
+        assert gamdl_job.output_path
 
         if gamdl_job.url_type == "song":
             # TODO: other file formats
             self.filepath = (
-                self.gamdl_job.output_path
+                gamdl_job.output_path
                 / Path(self.gamdl_job.artist_name)
                 / Path(self.gamdl_job.album_name)
                 / Path(f"{self.gamdl_job.track_number:02} " + self.gamdl_job.name)
@@ -43,14 +53,61 @@ class Song:
         else:
             raise ValueError("Only songs allowed")
 
+    def __pydantic__(self):
+        ret = SongSchema(
+            id=self.id,
+            job_id=self.job_id,
+            album_name=self.album_name,
+            artist_name=self.artist_name,
+            name=self.name,
+            attributes=self.attributes,
+            url=self.url,
+            image=(self.attributes.get("attributes", {}).get("artwork" ,{})).get("url"),
+            type=self.type,
+            status="pending"
+
+        )
+
+        if self.job_result:
+            job_obj = self.job_result.__pydantic__()
+            ret.status = job_obj.status
+
+        return ret
+
     def __json__(self):
         ret = self.gamdl_job.__json__()
         ret["job_id"] = ret["id"]
         ret["id"] = self.id
         return ret
 
+class DiscordAudioSource(discord.FFmpegOpusAudio):
+    def __init__(
+        self,
+        player: "DiscordPlayerState",
+        bitrate: int = 192,
+        seek_time: int = 0,
+        before_options: str = "",
+        options: str = "",
+    ):
+        self.player = player
+        self.volume = player.volume
+        self.counter: int = seek_time
+        song = player.current_song
+        assert(song)
+        before_options = f'-ss {self.counter / 1000} ' + before_options
+        options = f'-filter:a "volume={player.volume}" ' + options
+        super().__init__(source=song.filepath.absolute().as_posix(),before_options=before_options, options=options, bitrate=bitrate)
 
-@dataclass
+    def read(self) -> bytes:
+        # add the time here
+        self.counter += 20
+        return super().read()
+
+    def new_player(self, seek_time: int | None = None) -> "DiscordAudioSource":
+        if not seek_time:
+            seek_time = self.counter
+        return DiscordAudioSource(player=self.player, seek_time=seek_time)
+
 class DiscordPlayerState:
     def __init__(
         self,
@@ -66,10 +123,25 @@ class DiscordPlayerState:
         self.queue: Deque[Song] = deque()
         self.queue_capacity = cfg.DISCORD_QUEUE_CAPACITY
         self.guild: Guild = ctx.guild  # type: ignore
-        self.volume = 0.3
+        self.volume = 0.2
         self.voice_client = voice_client
         self.current_song: Song | None = None
         self.mode: DiscordPlayerModes = DiscordPlayerModes.normal
+        self.played: int = 0 
+        self.song_length: int = 0
+
+    def __pydantic__(self):
+        return PlayerStateSchema(
+            guild_name=self.guild.name,
+            channel_name=self.voice_client.channel.name,
+            current_song=self.current_song.__pydantic__() if self.current_song else None,
+            is_paused=self.voice_client.is_paused(),
+            volume=self.volume,
+            mode=self.mode,
+            owner_name=self.owner.name,
+            song_length=0,
+            song_played=0,
+        )
 
 
 class DiscordPlayerManager:
@@ -131,7 +203,7 @@ class DiscordPlayerManager:
             return None
 
     async def wait_timeout(self, player: DiscordPlayerState):
-        await asyncio.sleep(300)
+        await asyncio.sleep(300.0)
         if not player.voice_client.is_playing() and not player.voice_client.is_paused():
             await self.disconnect_player(player)
 
@@ -139,7 +211,6 @@ class DiscordPlayerManager:
         """Plays next song."""
         if not song:
             player.current_song = None
-            # TODO: Improve voice client timeout functionality
             await self.wait_timeout(player)
             return
 
@@ -152,10 +223,9 @@ class DiscordPlayerManager:
                 await send_public(player.ctx, "timed out waiting for song to download")
                 return
 
-        # TODO: Add seeking
         player.voice_client.play(
             DiscordAudioSource(
-                volume=player.volume, source=song.filepath.absolute().as_posix()
+                player=player
             ),
             after=lambda e: asyncio.run_coroutine_threadsafe(
                 self.play_next_song(player, self.next_song_info(player)),
@@ -186,11 +256,9 @@ class DiscordPlayerManager:
                 player.queue.remove(song)
                 player.queue.append(song)
 
-    def skip(self, player: DiscordPlayerState):
+    async def skip(self, player: DiscordPlayerState):
         player.voice_client.stop()
-
-    def repeat(self, player: DiscordPlayerState):
-        player.voice_client.stop()
+        return await self.emit_state_update(player)
 
     def remove_song(self, player: DiscordPlayerState, id: int):
         for song in player.queue:
@@ -213,15 +281,33 @@ class DiscordPlayerManager:
             player.voice_client.resume()
         else:
             player.voice_client.pause()
-        return self.emit_state_update(player)
+        return await self.emit_state_update(player)
 
     async def resume(self, player: DiscordPlayerState):
         player.voice_client.resume()
-        return self.emit_state_update(player)
+        return await self.emit_state_update(player)
 
     async def pause(self, player: DiscordPlayerState):
         player.voice_client.pause()
-        return self.emit_state_update(player)
+        return await self.emit_state_update(player)
+
+    async def seek(self, player: DiscordPlayerState, seek_time: int):
+        if player.current_song:
+            audio_source: DiscordAudioSource = player.voice_client.source #type: ignore
+            player.voice_client.source = audio_source.new_player(seek_time)
+        return await self.emit_state_update(player)
+
+    async def set_volume(self, player: DiscordPlayerState, volume: float):
+        # Limit volume to 0.5 prevent earrape
+
+        volume = max(min(volume, 0.5), 0.0)
+        player.volume = volume
+
+        if player.current_song:
+            audio_source: DiscordAudioSource = player.voice_client.source #type: ignore
+            player.voice_client.source = audio_source.new_player()
+        return await self.emit_state_update(player)
+
 
     @classmethod
     async def emit_state_update(cls, player: DiscordPlayerState):
@@ -242,28 +328,3 @@ class DiscordPlayerManager:
         }
 
 
-class DiscordAudioSource(discord.FFmpegOpusAudio):
-    def __init__(
-        self,
-        *args,
-        pass_time: int = 0,
-        volume: float = 1.0,
-        before_options: str = "",
-        options: str = "",
-        **kwargs,
-    ):
-        super().__init__(*args, **kwargs)
-        self.counter: int = 0
-        self.pass_time = pass_time
-        self.bitrate = 192
-        self.before_options = before_options
-        self.options = f'-filter:a "volume={volume}" ' + options
-
-    def read(self) -> bytes:
-        # add the time here
-        self.counter += 20
-        return super().read()
-
-    # custom method to return the current play-time
-    def check_time(self) -> float:
-        return self.counter / 1000 + self.pass_time

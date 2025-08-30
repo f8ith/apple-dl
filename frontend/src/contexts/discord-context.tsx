@@ -11,8 +11,8 @@ export interface TDiscordContext {
   guildId: string | null;
   playerId: string | null;
   headers: {
-    guild_id: string | null;
-    player_id: string | null;
+    "guild-id": string | null;
+    "player-id": string | null;
   };
   playerState: any;
   connect: () => void;

@@ -69,7 +69,7 @@ function Search() {
   };
 
   const searchItems = useCallback(async (term: string) => {
-    const result = await axios.get("/api/search", { params: { term: term } });
+    const result = await axios.get("/api/v1/am/search", { params: { term: term } });
     return result.data;
   }, []);
 
@@ -123,8 +123,8 @@ function Search() {
                         variant="secondary"
                         size="icon"
                         onClick={async (_) => {
-                          await axios.post(
-                            "/api/discord/queue",
+                          await axios.put(
+                            "/api/v1/discord/queue",
                             { url: item.url },
                             { headers }
                           );

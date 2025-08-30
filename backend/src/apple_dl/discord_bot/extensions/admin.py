@@ -1,6 +1,8 @@
-from logging import getLogger
-from apple_dl.discord_bot.utils import PACKAGE_PATH, get_extension
 from discord.ext import commands
+
+from apple_dl.discord_bot.utils import PACKAGE_PATH, get_extension
+from apple_dl.logger import logger
+
 
 
 async def setup(bot: commands.Bot):
@@ -14,7 +16,7 @@ class Admin(commands.Cog):
     @staticmethod
     async def on_ready():
         """Print when the extension is ready."""
-        getLogger("quart.discord_bot").info("Admin extension loaded")
+        logger.info("Admin extension loaded")
 
     def __init__(self, bot: commands.Bot):
         """Initizises debug extension."""

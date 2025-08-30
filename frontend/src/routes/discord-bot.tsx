@@ -49,7 +49,7 @@ function RouteComponent() {
 
   useEffect(() => {
     const fun = async () => {
-      const result = await axios.get("/api/discord/queue", { headers });
+      const result = await axios.get("/api/v1/discord/queue", { headers });
 
       setQueue(
         result.data.map((item: TBaseSong) => {

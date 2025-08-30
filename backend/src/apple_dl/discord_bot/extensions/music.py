@@ -1,14 +1,13 @@
 from copy import deepcopy
-from logging import getLogger
 import random
-from apple_dl.config import cfg
-from apple_dl.discord_bot.bot import DiscordBot
-from apple_dl.discord_bot.player import DiscordPlayerState
-from apple_dl.discord_bot.utils import send_private, send_public
-from apple_dl.utils import truncated_uuid4
+
 from discord import Member, VoiceState
 from discord.ext import commands
 
+from apple_dl.config import cfg
+from apple_dl.discord_bot.bot import DiscordBot
+from apple_dl.discord_bot.utils import send_private, send_public
+from apple_dl.logger import logger
 
 async def setup(bot: DiscordBot):
     """Set up the extension."""
@@ -24,7 +23,7 @@ class Music(commands.Cog):
     @staticmethod
     async def on_ready():
         """Print when the extension is ready."""
-        getLogger("quart.discord_bot").info("Music extension loaded")
+        logger.info("Music extension loaded")
 
     @commands.hybrid_command()
     @commands.guild_only()

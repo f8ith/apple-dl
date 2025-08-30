@@ -4,6 +4,8 @@ from typing import Any, Callable, cast, Tuple
 import socketio
 
 from ..config import cfg
+from ..logger import logger
+
 
 old_on = socketio.AsyncServer.on
 
@@ -26,17 +28,16 @@ sio: TypedAsyncServer = cast(
 
 
 async def notify_job_done(_: int) -> None:
-    getLogger("quart.app").info("job done")
+    logger.info("gamdl job done")
     await sio.emit("status_update")
 
 async def player_state_changed(data: dict[str, Any]) -> None:
-    getLogger("quart.app").info("player state changed")
+    logger.info("player state changed")
     await sio.emit("player_state_changed", data)
 
 
-def register_socketio(app):
-    app.asgi_app = socketio.ASGIApp(
+def get_asgi_app():
+    return socketio.ASGIApp(
         sio,
-        app.asgi_app,
         socketio_path="/socket.io",
     )

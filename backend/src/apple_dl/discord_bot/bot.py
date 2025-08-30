@@ -1,8 +1,7 @@
-from logging import getLogger
-
 from discord.ext import commands
 
 from apple_dl.discord_bot.player import DiscordPlayerManager
+from apple_dl.logger import logger
 
 
 class DiscordBot(commands.Bot):  # subclass discord.Bot
@@ -11,4 +10,4 @@ class DiscordBot(commands.Bot):  # subclass discord.Bot
         self.player_manager = DiscordPlayerManager()
 
     async def on_ready(self):  # override the on_ready event
-        getLogger("quart.discord_bot").info(f"logged in as {self.user}")
+        logger.info(f"logged in as {self.user}")

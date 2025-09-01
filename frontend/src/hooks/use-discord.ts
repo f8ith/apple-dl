@@ -1,29 +1,170 @@
-import axios from "axios";
-import { useContext, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import { DiscordContext } from "@/contexts/discord-context";
+import { usePersistString } from "@/hooks/use-persist-state";
+import { useSocket } from "@/hooks/use-socket";
+import { $api } from "@/lib/api";
+import { TItemType } from "@/lib/apple-music";
+import { components, paths } from "@/openapi-schema";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function useDiscord() {
-  const context = useContext(DiscordContext);
+  const [playerId, setPlayerId] = usePersistString("player_id", "");
+  const header = useMemo(
+    () => ({
+      "player-id": playerId,
+    }),
+    [playerId]
+  );
 
-  if (context === undefined) {
-    throw new Error("useDiscord() must be used within a DiscordProvider");
-  }
+  const enabledItemTypes: TItemType[] = ["songs"];
+
+  const { registerHandler, emitEvent } = useSocket();
+  const [discordEnabled, setDiscordEnabled] = useState(false);
+
+  const connect = () => {
+    if (discordEnabled) return;
+    setDiscordEnabled(true);
+    emitEvent("register_player_id", {"player-id": playerId});
+  };
+
+  const disconnect = () => {
+    setPlayerId("");
+    setDiscordEnabled(false);
+  };
+
+  const playerStateQuery = $api.useQuery(
+    "get",
+    "/api/v1/discord/player_state",
+    { params: { header: header } },
+    { enabled: discordEnabled }
+  );
+
+  const playerQueueQuery = $api.useQuery(
+    "get",
+    "/api/v1/discord/queue",
+    { params: { header: header } },
+    { enabled: discordEnabled, initialData: [] }
+  );
+
+  const validPlayerStateQuery = $api.useQuery(
+    "get",
+    "/api/v1/discord/check_state",
+    { params: { header } }
+  );
+
+  const useQueueMutation = $api.useMutation(
+    "put",
+    "/api/v1/discord/queue",
+  );
+
+  const useRemoveSong = $api.useMutation(
+    "delete",
+    "/api/v1/discord/remove_song"
+  )
+
+  const usePlayNext = $api.useMutation(
+    "put",
+    "/api/v1/discord/play_next",
+  );
+
+
+  const useSkip = $api.useMutation(
+    "put",
+    "/api/v1/discord/skip",
+  );
+
+  const usePlayPause = $api.useMutation(
+    "put",
+    "/api/v1/discord/play_pause",
+  );
+  
+  const useLoop = $api.useMutation(
+    "put",
+    "/api/v1/discord/loop",
+  );
+
+  const useRepeat = $api.useMutation(
+    "put",
+    "/api/v1/discord/repeat",
+  );
+
+
   useEffect(() => {
-    // TODO: Improve this spaghetti checking whether or not session is valid
-    const fun = async () => {
-      const result = await axios.get("/api/v1/discord/queue", {
-        headers: context.headers,
-      });
+    // TODO Improve this spaghetti checking whether or not session is valid
+    if (validPlayerStateQuery.isSuccess && validPlayerStateQuery.data) {
+      const ok = validPlayerStateQuery.data && validPlayerStateQuery.data.valid;
 
-      const ok = result.status === 200;
+      if (ok) connect();
+      else disconnect();
+    }
+  }, [validPlayerStateQuery.isSuccess, validPlayerStateQuery.data]);
 
-      if (ok) context.connect();
-      else context.disconnect();
-    };
+  const usePlayerStateSubscription = () => {
+    const queryClient = useQueryClient();
+    useEffect(() => {
+      console.log("register player state");
+      registerHandler(
+        "player_state_changed",
+        (newState: components["schemas"]["PlayerStateSchema"]) => {
+          queryClient.setQueriesData(
+            {
+              queryKey: [
+                "get",
+                "/api/v1/discord/player_state",
+                { params: { header } },
+              ],
+            },
+            () => {
+              return newState
+            }
+          );
+        }
+      );
+    }, []);
+  };
 
-    fun();
-  }, []);
+  const useQueueSubscription = () => {
+    const queryClient = useQueryClient();
+    useEffect(() => {
+      console.log("register queue state");
+      registerHandler(
+        "player_queue_changed",
+        (newState: paths["/api/v1/discord/queue"]["get"]["responses"]["200"]["content"]["application/json"]) => {
+          queryClient.setQueriesData(
+            {
+              queryKey: [
+                "get",
+                "/api/v1/discord/queue",
+                { params: { header } },
+              ],
+            },
+            () => {
+              return newState
+            }
+          );
+        }
+      );
+    }, []);
+  };
 
-  return context;
+
+
+  return {
+    discordEnabled,
+    connect,
+    disconnect,
+    playerState: playerStateQuery.data,
+    usePlayerStateSubscription,
+    usePlayPause,
+    useLoop,
+    useRepeat,
+    usePlayNext,
+    useRemoveSong,
+    useSkip,
+    queue: playerQueueQuery.data,
+    useQueueMutation,
+    useQueueSubscription,
+    header,
+    enabledItemTypes,
+  };
 }

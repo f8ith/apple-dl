@@ -1,35 +1,30 @@
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useDiscord } from "@/hooks/use-discord";
-import { AMCardData, TBaseSong, toAMCardData } from "@/lib/apple-music";
+import { getOrDefaultImage, getShortLabel } from "@/lib/apple-music";
 import { Label } from "@radix-ui/react-label";
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
-import axios from "axios";
-import { PlusIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowUpToLineIcon, XIcon } from "lucide-react";
 
 type DiscordBotSearch = {
-  guild_id: string | null;
   player_id: string | null;
 };
 
 const defaultValues = {
-  guild_id: null,
   player_id: null,
 };
 
-// TODO: search params are not stripped?
+// TODO search params are not stripped?
+// TODO does not adjust to sidebar
 export const Route = createFileRoute("/discord-bot")({
   component: RouteComponent,
   validateSearch: (search: Record<string, unknown>): DiscordBotSearch => {
     return {
-      guild_id: search.guild_id ? (search.guild_id as string) : null,
       player_id: search.player_id ? (search.player_id as string) : null,
     };
   },
   beforeLoad: ({ search }) => {
-    if (search.guild_id && search.player_id) {
-      sessionStorage.setItem("guild_id", search.guild_id);
+    if (search.player_id) {
       sessionStorage.setItem("player_id", search.player_id);
     }
 
@@ -43,25 +38,11 @@ export const Route = createFileRoute("/discord-bot")({
 });
 
 function RouteComponent() {
-  const [queue, setQueue] = useState<AMCardData[]>([]);
+  const { discordEnabled, queue, disconnect, playerState, usePlayNext, useRemoveSong, header, useQueueSubscription } = useDiscord();
 
-  const { discordEnabled, headers, disconnect, playerState } = useDiscord();
+  useQueueSubscription();
 
-  useEffect(() => {
-    const fun = async () => {
-      const result = await axios.get("/api/v1/discord/queue", { headers });
-
-      setQueue(
-        result.data.map((item: TBaseSong) => {
-          return toAMCardData(item);
-        })
-      );
-    };
-
-    fun();
-  }, []);
-
-  if (!discordEnabled)
+  if (!discordEnabled || !playerState)
     return (
       <div className="flex h-[90vh] w-full items-center justify-center p-6 md:p-10">
         <div className="w-full max-w-sm">not connected</div>
@@ -83,7 +64,7 @@ function RouteComponent() {
         Playing next
       </h3>
 
-      <div className="dark:scheme-dark overflow-y-auto grow-1 min-w-0 h-[500px] w-full">
+      {queue && <div className="dark:scheme-dark overflow-y-auto grow-1 min-w-0 h-[500px] w-full">
         <div className="grid grid-cols-1 -top-128 -mb-128">
           {queue.map((item, index: number) => {
             return (
@@ -96,25 +77,38 @@ function RouteComponent() {
                     <img
                       className="left-0 top-0 w-full h-full object-cover object-center transition duration-50 rounded-lg"
                       loading="lazy"
-                      src={item.image}
+                      src={getOrDefaultImage(item)}
                     ></img>
                   </div>
                   <div className="flex flex-col">
                     <p>{item.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      {item.shortLabel}
+                      {getShortLabel(item)}
                     </p>
                   </div>
                 </div>
                 <div className="relative">
-                  <div className="absolute flex-row gap-2 bottom-2 right-2">
+                  <div className="absolute flex flex-row gap-2 bottom-2 right-2">
                     <Button
                       className="size-8"
                       variant="secondary"
                       size="icon"
-                      onClick={async (_) => {}}
+                      onClick={(_) => {
+                        usePlayNext.mutate({body: {id: item.id}, params: {header}})
+                      }}
                     >
-                      <PlusIcon />
+                      <ArrowUpToLineIcon 
+                      />
+                    </Button>
+                    <Button
+                      className="size-8"
+                      variant="secondary"
+                      size="icon"
+                      onClick={(_) => {
+                        useRemoveSong.mutate({body: {id: item.id}, params: {header}})
+                      }}
+                    >
+                      <XIcon />
                     </Button>
                   </div>
                 </div>
@@ -123,7 +117,7 @@ function RouteComponent() {
             );
           })}
         </div>
-      </div>
+      </div>}
     </main>
   );
 }

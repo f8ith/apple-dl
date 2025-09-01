@@ -36,7 +36,6 @@ const Navbar = () => {
             : "text-gray-500")
         }
         search={{
-          guild_id: null,
           player_id: null,
         }}
       >

@@ -10,22 +10,21 @@ class DiscordPlayerModes(str, Enum):
 
 class SongSchema(BaseModel):
     id: int
-    job_id: int
-    album_name: str | None
-    artist_name: str | None
+    album_name: str
+    artist_name: str
     name: str
-    attributes: dict[str, Any]
     url: str
-    image: str | None
-    type: str
-    status: str
+    image: str
+    length: int
+    lyrics: str
+    synced_lyrics: str 
 
 class PlayerStateSchema(BaseModel):
     guild_name: str
     channel_name: str
     current_song: SongSchema | None
-    song_length: int
-    song_played: int
+    song_length: int | None
+    song_played: int | None
     is_paused: bool
     volume: float
     mode: DiscordPlayerModes

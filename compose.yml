@@ -1,10 +1,18 @@
 services:
-  apple-dl:
-    build: .
-    container_name: apple-dl
-    image: f8ith/apple-dl:stable
+  apple-dl-ui:
+    build: ./frontend
+    container_name: apple-dl-ui
+    image: f8ith/apple-dl-ui:stable
     ports:
-      - "127.0.0.1:6887:6887"
+      - "0.0.0.0:6887:6887"
+
+  apple-dl-server:
+    build: ./backend
+    container_name: apple-dl-server
+    image: f8ith/apple-dl-server:stable
     volumes:
       - ./appledl-docker:/config
       - /mnt/media-server/ingest/music:/downloads
+    ports:
+      - "0.0.0.0:8000:8000"
+

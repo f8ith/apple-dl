@@ -1,6 +1,7 @@
 import Navbar from "@/components/navbar";
 import PlaybackBar from "@/components/playback-bar";
-import DiscordProvider from "@/providers/discord-provider";
+import SecondarySidebar from "@/components/secondary-sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import JobsProvider from "@/providers/jobs-provider";
 import SocketProvider from "@/providers/socket-provider";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
@@ -11,12 +12,15 @@ export const Route = createRootRoute({
     <>
       <SocketProvider>
         <JobsProvider>
-          <DiscordProvider>
             {/*<div className="flex flex-col mx-auto min-h-100 w-full">*/}
-            <Navbar />
-            <Outlet />
-            <PlaybackBar />
-          </DiscordProvider>
+            <SidebarProvider>
+             <SidebarInset>
+              <Navbar />
+              <Outlet />
+              </SidebarInset>
+              <SecondarySidebar />
+              <PlaybackBar />
+            </SidebarProvider>
         </JobsProvider>
       </SocketProvider>
       <TanStackRouterDevtools />

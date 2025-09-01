@@ -6,7 +6,7 @@ from discord.ext import commands
 
 from apple_dl.config import cfg
 from apple_dl.discord_bot.bot import DiscordBot
-from apple_dl.discord_bot.utils import send_private, send_public
+from apple_dl.discord_bot.utils import send_message
 from apple_dl.logger import logger
 
 async def setup(bot: DiscordBot):
@@ -32,17 +32,17 @@ class Music(commands.Cog):
         author: Member = ctx.author  # type: ignore
         assert guild and author
         if not author.voice or not author.voice.channel:
-            await send_public(ctx, "you are not in a voice channel")
+            await send_message(ctx, "you are not in a voice channel")
             return
 
         if guild.voice_client:
-            await send_public(ctx, "someone else is already connected")
+            await send_message(ctx, "someone else is already connected")
             return
 
         player_id = await self.player_manager.connect_player(ctx)
 
-        message_str = f'access control panel through: {cfg.SERVER_URL}/discord-bot?guild_id="{guild.id}"&player_id={player_id}'
-        await send_private(ctx, message_str)
+        message_str = f'access control panel througe: {cfg.SERVER_URL}/discord-bot?player_id={player_id}'
+        await send_message(ctx, message_str, ephemeral=True)
 
     @commands.hybrid_command()
     @commands.guild_only()
@@ -54,8 +54,8 @@ class Music(commands.Cog):
         player = self.player_manager.by_guild(guild.id)
 
         if not player:
-            await send_public(
-                ctx, "no client is connected, may be dangling voice client"
+            await send_message(
+                ctx, content="no client is connected, may be dangling voice client"
             )
             await guild.change_voice_state(channel=None)
             return
@@ -67,12 +67,12 @@ class Music(commands.Cog):
                 and owner_voice.channel
                 and owner_voice.channel.id == player.channel_id
             ):
-                await send_public(ctx, "you are not the owner of the session")
+                await send_message(ctx, "you are not the owner of the session")
                 return
-            # If owner is somehow not in the voice channel anymore, disconnect
+        # If owner is somehow not in the voice channel anymore, disconnect
 
         await self.player_manager.disconnect_player(player)
-        await send_public(ctx, "disconnected player")
+        await send_message(ctx, "disconnected player")
 
     @commands.Cog.listener()
     async def on_voice_state_update(
@@ -100,4 +100,4 @@ class Music(commands.Cog):
 
                 player.owner = random.choice(members)
 
-            # TODO: Maybe send a message
+            # TODO Maybe send a message

@@ -207,3 +207,5 @@ __marimo__/
 .streamlit/secrets.toml
 
 dev-server.sh
+*.env
+Apple Music/**

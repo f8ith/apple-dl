@@ -708,13 +708,13 @@ files = [
 
 [[package]]
 name = "gamdl"
-version = "2.6"
+version = "2.6.2"
 description = "A command-line app for downloading Apple Music songs, music videos and post videos."
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "gamdl-2.6-py3-none-any.whl", hash = "sha256:442d649cc6f8ae8268cafad7e938d35f8de2bfc3a3f65754053508905acb7910"},
-    {file = "gamdl-2.6.tar.gz", hash = "sha256:affe9de59ac5eee56c07df8e8bd2da0d8416bd8e26ce17e540d6d09e6cf7e720"},
+    {file = "gamdl-2.6.2-py3-none-any.whl", hash = "sha256:58c4005b2ac19ffa821be9111e8fd469ea9560df5945c3bc0deeba8c231dda30"},
+    {file = "gamdl-2.6.2.tar.gz", hash = "sha256:6531592f9f7d19f0836abfa95cfc02b80312065fec951f0a107a2390f9a9d099"},
 ]
 
 [package.dependencies]

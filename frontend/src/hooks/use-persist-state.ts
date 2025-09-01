@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export function usePersistState<T>(
   name: string,
   defaultValue: T = null as T
 ): [T, React.Dispatch<React.SetStateAction<T>>] {
-  const persist = window.sessionStorage.getItem(name);
+  const persist = useMemo(() => window.sessionStorage.getItem(name), []);
 
   const [state, setState] = useState<T>(
     (persist ? JSON.parse(persist) : defaultValue) as T
@@ -22,7 +22,7 @@ export function usePersistString(
   name: string,
   defaultValue: string | null = null
 ): [string, React.Dispatch<React.SetStateAction<string>>] {
-  const persist = window.sessionStorage.getItem(name);
+  const persist = useMemo(() => window.sessionStorage.getItem(name), []);
 
   const [state, setState] = useState<string>(
     (persist ? persist : defaultValue) as string

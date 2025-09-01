@@ -1,4 +1,4 @@
-import os
+from discord import Embed
 from discord.ext import commands
 
 EXTENSION_PATH = ".discord_bot.extensions."
@@ -8,19 +8,27 @@ PACKAGE_PATH = "apple_dl"
 def get_extension(extension: str) -> str:
     return EXTENSION_PATH + extension
 
-
-async def send_public(ctx: commands.Context, message_str):
+async def send_embed(ctx: commands.Context, embed: Embed, ephemeral: bool = False):
     if ctx.interaction:
-        await ctx.interaction.response.send_message(message_str, ephemeral=True)
+        if embed:
+            await ctx.interaction.response.send_message(embed=embed, ephemeral=ephemeral, delete_after=300)
         return
 
-    await ctx.send(message_str)
+    if ephemeral:
+        channel = await ctx.author.create_dm()
+        await channel.send(embed=embed)
 
+    else:
+        await ctx.send(embed=embed)
 
-async def send_private(ctx: commands.Context, message_str):
+async def send_message(ctx: commands.Context, content: str, ephemeral: bool = False):
     if ctx.interaction:
-        await ctx.interaction.response.send_message(message_str, ephemeral=True)
+        await ctx.interaction.response.send_message(content, ephemeral=ephemeral, delete_after=300)
         return
 
-    channel = await ctx.author.create_dm()
-    await channel.send(message_str)
+    if ephemeral:
+        channel = await ctx.author.create_dm()
+        await channel.send(content)
+
+    else:
+        await ctx.send(content)

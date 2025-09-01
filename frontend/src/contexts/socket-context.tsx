@@ -5,12 +5,12 @@ export const SocketContext = createContext<TSocketContext>(
 );
 export type SocketEventHandler = (...args: any[]) => void;
 
-export interface SocketEvent {
-  event_name: string;
-  handler: SocketEventHandler;
-}
+export const eventNames = ["connect", "status_update", "player_state_changed", "player_state_changed", "register_player_id"];
+export type TEvent = (typeof eventNames)[number];
 
 export interface TSocketContext {
   socketConnected: boolean;
-  registerHandler: (event_name: string, handler: SocketEventHandler) => void;
+  registerHandler: (event_name: TEvent, handler: SocketEventHandler) => void;
+  removeHandler: (event_name: TEvent, handler: SocketEventHandler) => void;
+  emitEvent: (event_name: TEvent, ...args: any[]) => void;
 }

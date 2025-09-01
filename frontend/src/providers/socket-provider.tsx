@@ -1,10 +1,13 @@
 import {
+  eventNames,
   SocketContext,
-  SocketEvent,
   SocketEventHandler,
+  TEvent,
 } from "@/contexts/socket-context";
 import { socket } from "@/lib/socket";
 import { useEffect, useMemo, useState } from "react";
+
+let didInit = false;
 
 interface SocketProviderProps {
   children: React.ReactNode;
@@ -12,38 +15,70 @@ interface SocketProviderProps {
 
 export default function SocketProvider({ children }: SocketProviderProps) {
   const [socketConnected, setSocketConnected] = useState(false);
-  const [events, setEvents] = useState<SocketEvent[]>([]);
+  const [events, setEvents] = useState<Record<string, SocketEventHandler[]>>(
+    {}
+  );
 
-  const registerHandler = (event_name: string, handler: SocketEventHandler) => {
+  const registerHandler = (event_name: TEvent, handler: SocketEventHandler) => {
     setEvents((oldEvents) => {
-      oldEvents.push({ event_name, handler });
+      if (!oldEvents[event_name]) {
+        oldEvents[event_name] = [handler];
+      }
+      oldEvents[event_name].push(handler);
       return oldEvents;
     });
 
     socket.on(event_name, handler);
   };
 
+  const removeHandler = (event_name: TEvent, handler: SocketEventHandler) => {
+    setEvents((oldEvents) => {
+      const foundIndex = oldEvents[event_name].findIndex(handler);
+
+      if (foundIndex > -1) {
+        oldEvents[event_name].splice(foundIndex, 1);
+      }
+      return oldEvents;
+    });
+
+    socket.off(event_name, handler);
+  };
+
+  const emitEvent = (event_name: TEvent, ...args: any[]) => {
+    socket.emit(event_name, ...args)
+  }
+
   const contextValue = useMemo(
     () => ({
       socketConnected,
       registerHandler,
+      removeHandler,
+      emitEvent,
     }),
-    [socketConnected, registerHandler]
+    [socketConnected, registerHandler, removeHandler, emitEvent]
   );
 
   useEffect(() => {
-    function onConnect() {
-      setSocketConnected(true);
-      console.log("socket.io connected");
-    }
+    if (!didInit) {
+      didInit = true;
 
-    registerHandler("connect", onConnect);
-
-    return () => {
-      for (const event of events) {
-        socket.off(event.event_name, event.handler);
+      function onConnect() {
+        setSocketConnected(true);
+        console.log("socket.io connected");
       }
-    };
+      socket.on("connect", onConnect);
+
+      return () => {
+        socket.off("connect", onConnect);
+        for (const eventName in eventNames) {
+          if (events[eventName]) {
+            for (const handler of events[eventName]) {
+              socket.off(eventName, handler);
+            }
+          }
+        }
+      };
+    }
   }, []);
 
   return (

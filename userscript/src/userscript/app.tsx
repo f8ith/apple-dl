@@ -65,7 +65,7 @@ function submitJob(url: string) {
       onload: (response) => {
         const json = JSON.parse(response.responseText);
         if (json.status === 'ok') {
-          showToast('apple-dl success', { theme: 'dark' });
+          showToast('apple-dl done', { theme: 'dark' });
         } else {
           showToast('apple-dl failed', { theme: 'dark' });
         }

@@ -1,14 +1,20 @@
 import asyncio
 from collections import deque
+from dataclasses import dataclass
+from enum import Enum
 import itertools
+from pathlib import Path
+from re import I
 from typing import Deque
 
 import discord
 from discord import Member, Guild, VoiceClient
 from discord.ext import commands
-from gamdl.models import DownloadInfo, MediaType
+from gamdl.models import DownloadInfo
 
 from apple_dl.config import cfg
+from apple_dl.discord_bot.utils import send_embed, send_message
+from apple_dl.jobs import GamdlJob
 from apple_dl.routers.websocket import player_queue_changed, player_state_changed
 from apple_dl.schemas.discord_schemas import PlayerStateSchema, SongSchema, DiscordPlayerModes
 from apple_dl.utils import truncated_uuid4
@@ -16,48 +22,111 @@ from apple_dl.utils import truncated_uuid4
 class Song:
     id_iter = itertools.count()
 
-    def __init__(self, job_result: DownloadInfo):
+    def __init__(self, gamdl_job: GamdlJob):
         # TODO Handle albums, playlists etc.
         self.id = next(self.id_iter)
+        self.job_id = gamdl_job.id
+        self.gamdl_job = gamdl_job
+        self.url = gamdl_job.url
 
-        self.album_name = job_result.media_metadata["attributes"].get("albumName")
-        self.artist_name = job_result.media_metadata["attributes"].get("artistName")
-        self.name = job_result.media_metadata["attributes"].get("name")
-        self.lyrics = job_result.lyrics.unsynced
-        self.synced_lyrics = job_result.lyrics.synced
-        self.track_number = job_result.tags.track
-        self.type = job_result.tags.media_type
-        self.filepath = job_result.final_path
-        self.length = job_result.media_metadata.get("attributes", {}).get("durationInMillis", 0)
-        self.image = job_result.cover_url
-        self.url = "" #TODO URL
+        if not isinstance(self.gamdl_job.job_result, DownloadInfo):
+            raise ValueError("invalid gamdl job")
 
-        if not self.type in [MediaType.SONG]:
+
+        self.attributes = gamdl_job.media_info["attributes"]
+        self.album_name = gamdl_job.album_name
+        self.artist_name = gamdl_job.artist_name
+        self.name = gamdl_job.name
+        self.has_lyrics = gamdl_job.has_lyrics
+        self.has_synced_lyrics = gamdl_job.has_synced_lyrics
+        self.track_number = gamdl_job.track_number
+        self.type = gamdl_job.url_type
+        self.output_path = gamdl_job.output_path
+        self.job_completed = gamdl_job.job_completed
+        self.length: int = self.attributes.get("durationInMillis")
+
+        assert gamdl_job.output_path
+
+        if gamdl_job.url_type == "song":
+            # TODO other file formats
+            #self.filepath = (
+            #    gamdl_job.output_path
+            #    / Path(self.gamdl_job.artist_name)
+            #    / Path(self.gamdl_job.album_name)
+            #    / Path(f"{self.gamdl_job.track_number:02} " + self.gamdl_job.name)
+            #).with_suffix(".m4a")
+            ...
+        else:
             raise ValueError("Only songs allowed")
+
+    def get_job_result(self):
+        return self.gamdl_job.job_result
+
+    def get_filepath(self) -> Path | None:
+        job_result = self.get_job_result()
+        if not isinstance(job_result, DownloadInfo):
+            return None
+        return job_result.final_path
+
+    def get_lyrics(self) -> str | None:
+        job_result = self.get_job_result()
+        if not isinstance(job_result, DownloadInfo) or not self.has_lyrics:
+            return "" 
+        return job_result.lyrics.unsynced
+
+    def get_synced_lyrics(self) -> str | None:
+        job_result = self.get_job_result()
+        if not isinstance(job_result, DownloadInfo) or not self.has_synced_lyrics:
+            return None
+        return job_result.lyrics.synced
+
+    def get_image(self) -> str | None:
+        return (self.attributes.get("attributes", {}).get("artwork" ,{})).get("url")
 
     def get_embed(self):
         embed = discord.Embed(
             title=self.name, url=self.url, colour=discord.Colour(0xFF0000)
         )
-        embed.set_thumbnail(url=self.image)
+        embed.set_thumbnail(url=self.get_image())
         #embed.set_author(name=f"{self.artist_nameauthor.name} {action}", icon_url=author.avatar_url)
         embed.add_field(name="Artist", value=self.artist_name, inline=True)
         embed.add_field(name="Album", value=self.album_name, inline=True)
-        embed.add_field(name="Lyrics", value=self.lyrics if self.lyrics else "")
+        embed.add_field(name="Lyrics", value=self.get_lyrics() if self.get_lyrics() else "")
         return embed
 
     def __pydantic__(self):
-        return SongSchema(
+        ret = SongSchema(
             id=self.id,
+            job_id=self.job_id,
             album_name=self.album_name,
             artist_name=self.artist_name,
             name=self.name,
+            attributes=self.attributes,
             url=self.url,
-            image=self.image,
+            image=self.get_image(),
+            type=self.type,
+            status="pending",
             length=self.length,
-            lyrics=self.lyrics,
-            synced_lyrics=self.synced_lyrics,
+            lyrics=self.get_lyrics(),
+            synced_lyrics=self.get_synced_lyrics(),
         )
+
+        job_result = self.get_job_result()
+        if job_result:
+            if isinstance(job_result, Exception):
+                ret.status = "failed"
+            else:
+                ret.status = "done"
+                ret.lyrics = self.get_lyrics()
+                ret.synced_lyrics = self.get_synced_lyrics()
+
+        return ret
+
+    def __json__(self):
+        ret = self.gamdl_job.__json__()
+        ret["job_id"] = ret["id"]
+        ret["id"] = self.id
+        return ret
 
 class DiscordAudioSource(discord.FFmpegOpusAudio):
     def __init__(
@@ -77,7 +146,7 @@ class DiscordAudioSource(discord.FFmpegOpusAudio):
             raise ValueError("no song is playing")
 
 
-        self.filepath = song.filepath
+        self.filepath = song.get_filepath() 
 
         if not self.filepath:
             raise ValueError("song gamdl job is not complete")
@@ -205,7 +274,6 @@ class DiscordPlayerManager:
             await self.disconnect_player(player)
 
     async def play_next_song(self, player: DiscordPlayerState, song: Song | None):
-        # TODO Broken after no more songs in queue
         """Plays next song."""
         if not song:
             player.current_song = None
@@ -216,22 +284,20 @@ class DiscordPlayerManager:
 
         player.current_song = song
 
-        #if not song.gamdl_job.job_result:
-        #    try:
-        #        await asyncio.wait_for(song.gamdl_job.job_completed.wait(), 10)
-        #    except asyncio.TimeoutError:
-        #        await send_message(player.ctx, "timed out waiting for song to download")
-        #        asyncio.create_task(self.play_next_song(player, self.next_song_info(player)))
-        #        return
+        if not song.gamdl_job.job_result:
+            try:
+                await asyncio.wait_for(song.gamdl_job.job_completed.wait(), 10)
+            except asyncio.TimeoutError:
+                await send_message(player.ctx, "timed out waiting for song to download")
+                asyncio.create_task(self.play_next_song(player, self.next_song_info(player)))
+                return
 
-        #if isinstance(song.gamdl_job.job_result, Exception):
-        #    await send_message(player.ctx, f"failed to download {song.name}")
-        #    asyncio.create_task(self.play_next_song(player, self.next_song_info(player)))
-        #    return
+        if isinstance(song.gamdl_job.job_result, Exception):
+            await send_message(player.ctx, f"failed to download {song.name}")
+            asyncio.create_task(self.play_next_song(player, self.next_song_info(player)))
+            return
 
         #await send_embed(player.ctx, embed=song.get_embed())
-
-        await self.emit_queue_update(player)
         await self.emit_state_update(player)
 
         player.voice_client.play(
@@ -273,7 +339,7 @@ class DiscordPlayerManager:
 
     async def skip(self, player: DiscordPlayerState):
         player.voice_client.stop()
-        return
+        return await self.emit_state_update(player)
 
     async def remove_song(self, player: DiscordPlayerState, id: int):
         for song in player.queue:

@@ -1,12 +1,16 @@
 import asyncio
+import concurrent.futures
+import functools
 import itertools
-from logging import getLogger
 from os import PathLike
-from typing import List, Tuple
+from typing import Any, List, Sequence, Tuple
+import urllib.parse
 
 from apple_dl.schemas.job_schemas import GamdlJobResultSchema, GamdlJobSchema
+from gamdl.models import DownloadInfo
+from gamdl.exceptions import MediaFileAlreadyExistsException, MediaFormatNotAvailableException, MediaNotStreamableException
 
-from .apple_music_api import apple_music, downloader
+from .apple_music_api import apple_music, downloader, downloader_song, parse_url_info_utf8
 from .config import cfg
 from .logger import logger
 from .routers.websocket import notify_job_done
@@ -18,34 +22,46 @@ class GamdlJob:
     def __init__(self, url: str, output_path: PathLike | None = None):
         self.id = next(self.id_iter)
         self.url = url
-        self.url_info = downloader.get_url_info(self.url)
 
-        media_id = self.url_info.id
-        self.url_type = self.url_info.type
+        url_info = parse_url_info_utf8(url)
+
+        if not url_info:
+            raise ValueError(f"unable to parse {urllib.parse.unquote(self.url)}")
+
+        self.url_info = url_info
+
+        self.media_id = self.url_info.sub_id or self.url_info.id or self.url_info.library_id
+        self.url_type = "song" if self.url_info.sub_id else self.url_info.type
 
         if self.url_type == "song":
-            self.media_info = apple_music.get_song(media_id)
+            media_info = apple_music.get_song(self.media_id)
         elif self.url_type in ("album", "albums"):
-            if self.url_info.is_library:
-                self.media_info = apple_music.get_library_album(media_id)
+            if self.url_info.library_id:
+                media_info = apple_music.get_library_album(self.media_id)
             else:
-                self.media_info = apple_music.get_album(media_id)
+                media_info = apple_music.get_album(self.media_id)
         elif self.url_type == "music-video":
-            self.media_info = apple_music.get_music_video(media_id)
+            media_info = apple_music.get_music_video(self.media_id)
         else:
-            raise ValueError("Only songs, albums and videos allowed")
+            raise ValueError("only songs, albums and videos allowed")
+
+        if not media_info:
+            raise ValueError(f"unable to retrieve media_info for {self.url}")
+
+        self.media_info: dict[str, Any] = media_info
+
 
         self.album_name = self.media_info["attributes"].get("albumName")
         self.artist_name = self.media_info["attributes"].get("artistName")
         self.name = self.media_info["attributes"].get("name")
         self.has_lyrics = self.media_info["attributes"].get("hasLyrics")
-        self.has_time_synced_lyrics = self.media_info["attributes"].get(
+        self.has_synced_lyrics = self.media_info["attributes"].get(
             "hasTimeSyncedLyrics"
         )
         self.track_number = self.media_info["attributes"].get("trackNumber")
         self.output_path = output_path
         self.job_completed = asyncio.Event()
-        self.job_result: GamdlJobResult | None = None
+        self.job_result: Sequence[DownloadInfo] | Exception | None = None
 
     def __pydantic__(self):
         ret = GamdlJobSchema(
@@ -58,15 +74,15 @@ class GamdlJob:
             image=(self.media_info.get("attributes", {}).get("artwork" ,{})).get("url"),
             type=self.url_type,
             status="pending",
-            stdout=None,
-            stderr=None,
+            error=None
         )
 
         if self.job_result:
-            job_result = self.job_result.__pydantic__()
-            ret.status = job_result.status
-            ret.stdout = job_result.stdout
-            ret.stderr = job_result.stderr
+            if isinstance(self.job_result, Exception):
+                ret.status = "failed"
+                ret.error = str(self.job_result)
+            else:
+                ret.status = "done"
 
         return ret
 
@@ -83,7 +99,8 @@ class GamdlJob:
         }
 
         if self.job_result:
-            ret.update(self.job_result.__json__())
+            #ret.update(self.job_result.__json__())
+            ...
         else:
             ret["status"] = "pending"
 
@@ -121,12 +138,12 @@ job_queue: asyncio.Queue[GamdlJob] = asyncio.Queue(maxsize=100)
 jobs: List[GamdlJob] = []
 consumers = []
 
-
 async def download_url(
     url: str, output_path: PathLike | None = None
 ) -> Tuple[int, bytes, bytes]:
-    # TODO: using gamdl directly from the commandline is extremely unreliable. write my own function + language issues cause path to resolve incorrectly
     logger.info(f"downloading {url}")
+
+    # Legacy subprocess downloader
     gamdl_config_path = cfg.GAMDL_DIR / "config.json"
 
     cmd = f"gamdl {url} --config-path={gamdl_config_path}"
@@ -156,23 +173,58 @@ async def create_job_task(url: str, output_path: PathLike | None = None) -> Gamd
 
 async def consume(queue: asyncio.Queue[GamdlJob]):
     while True:
+        results = []
+        error = None
+
         # wait for an item from the producer
         item = await queue.get()
+        loop = asyncio.get_running_loop()
 
-        job_result = GamdlJobResult(await download_url(item.url, item.output_path))
+        #job_result = GamdlJobResult(await download_url(item.url, item.output_path))
+        download_queue = downloader.get_download_queue(item.url_info)
+
+        for download_index, media_metadata in enumerate(
+            download_queue.medias_metadata,
+            start=1,
+        ):
+            try:
+                if media_metadata["type"] in {"songs", "library-songs"}:
+                    # TODO write my own function, get info without redownloading songs
+                    logger.info(f"downloading {id}")
+
+                    with concurrent.futures.ThreadPoolExecutor() as pool:
+                        info = await loop.run_in_executor(pool, functools.partial(downloader_song.download, media_metadata=media_metadata, playlist_attributes=download_queue.playlist_attributes, playlist_track=download_index))
+
+                    results.append(info)
+
+            except (
+                MediaNotStreamableException,
+                MediaFileAlreadyExistsException,
+                MediaFormatNotAvailableException,
+            ) as e:
+                logger.warning(
+                    f"({item.name}) {e}, skipping",
+                )
+            except Exception as e:
+                logger.error(
+                    f'failed to download "{item.name}"',
+                )
+                error = e
 
         # Notify the queue that the item has been processed
         queue.task_done()
 
-        item.job_result = job_result
+        item.job_result = error if error else results
 
         item.job_completed.set()
         await notify_job_done(item.id)
 
 
+
 async def start_consumers() -> None:
     # schedule consumers
-    for _ in range(3):
+    # TODO gamdl does not support parallelism, need custom function
+    for _ in range(1):
         consumer = asyncio.create_task(consume(job_queue))
         consumers.append(consumer)
 

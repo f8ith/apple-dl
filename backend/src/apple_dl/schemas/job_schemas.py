@@ -17,7 +17,5 @@ class GamdlJobSchema(BaseModel):
     image: str | None
     type: str
     status: str
-    stdout: str | None
-    stderr: str | None
-
+    error: str | None
 

@@ -1,3 +1,5 @@
+import { useDebounceValue } from "usehooks-ts";
+
 import { createFileRoute } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { CardTitle, CardDescription } from "@/components/ui/card";
@@ -5,100 +7,103 @@ import { Input } from "@/components/ui/input";
 import {
   AMCardData,
   itemTypes,
-  TBaseSong,
+  TBaseItem,
   toAMCardData,
 } from "@/lib/apple-music";
 
-import axios from "axios";
-import {
-  KeyboardEventHandler,
-  useCallback,
-  useContext,
-  useEffect,
-} from "react";
 import { CheckIcon, DownloadIcon, XIcon } from "lucide-react";
 import { SiDiscord } from "@icons-pack/react-simple-icons";
-import { DiscordContext } from "@/contexts/discord-context";
 import { useJobs } from "@/hooks/use-jobs";
 import { usePersistState } from "@/hooks/use-persist-state";
+import { useDiscord } from "@/hooks/use-discord";
+import { $api } from "@/lib/api";
+import { useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
+
 
 export const Route = createFileRoute("/search")({
   component: Search,
 });
 
 function Search() {
-  const [searchTerm, setSearchTerm] = usePersistState<string>("searchTerm", "");
-  const { submitJob } = useJobs();
+  const [searchText, setSearchText] = usePersistState<string>("searchText", "");
+  const [debouncedTerm, setDebouncedTerm] = useDebounceValue(searchText, 500);
+  const { useSubmitJob } = useJobs();
   const [items, setItems] = usePersistState<AMCardData[]>("searchItems", []);
-  const { headers, discordEnabled, enabledItemTypes } =
-    useContext(DiscordContext);
+  const { header, discordEnabled, enabledItemTypes, useQueueMutation } =
+    useDiscord();
 
-  const onKeyDown: KeyboardEventHandler<HTMLInputElement> = (e) => {
-    if (e.key === "Enter") {
-      handleSearch(searchTerm);
-    }
-  };
+const queryClient = useQueryClient();
 
-  const handleSearch = async (str: string) => {
-    console.log(searchTerm);
-    setItems([]);
-    if (str.startsWith("https://music.apple.com")) {
-      submitJob(str);
-    } else {
-      const data = await searchItems(str);
-      const newItems: AMCardData[] = [];
 
-      for (const itemType of itemTypes) {
-        if (data[itemType]) {
-          newItems.push(
-            ...data[itemType].data.map((val: TBaseSong, index: number) => {
-              return toAMCardData(val, index);
-            })
-          );
-        }
+  const handleSearch = (data: any) => {
+    setItems([])
+    const newItems: AMCardData[] = [];
+
+    for (const itemType of itemTypes) {
+      if (data[itemType]) {
+        newItems.push(
+          ...data[itemType].data.map((val: TBaseItem, index: number) => {
+            return toAMCardData(val, index);
+          })
+        );
       }
-
-      newItems.sort((a, b) => {
-        if (a.searchIndex < b.searchIndex) return -1;
-        else if (a.searchIndex == b.searchIndex) return 0;
-        else return 1;
-      });
-
-      setItems(newItems);
     }
+
+    newItems.sort((a, b) => {
+      if (a.searchIndex < b.searchIndex) return -1;
+      else if (a.searchIndex == b.searchIndex) return 0;
+      else return 1;
+    });
+
+    console.log(newItems)
+    setItems(newItems);
   };
 
-  const searchItems = useCallback(async (term: string) => {
-    const result = await axios.get("/api/v1/am/search", { params: { term: term } });
-    return result.data;
-  }, []);
+  const useSearchQuery = $api.useQuery("get", "/api/v1/am/search", {
+    params: { query: { term: debouncedTerm } },
+  });
+
 
   useEffect(() => {
-    const timeOutId = setTimeout(() => handleSearch(searchTerm), 500);
-    return () => clearTimeout(timeOutId);
-  }, [searchTerm]);
+    if (useSearchQuery.isSuccess && useSearchQuery.data) {
+      handleSearch(useSearchQuery.data);
+    }
+    }, [useSearchQuery.isSuccess, useSearchQuery.data]);
 
+
+  //TODO width broken
   return (
-    <main className="flex flex-col items-start justify-start p-8">
-      <div className="flex flex-row w-full items-start gap-4">
+    <main className="flex flex-col items-start justify-start grow-1 p-8">
+      <div className="flex flex-row items-start gap-4">
         <Input
           autoFocus={true}
-          onKeyDown={onKeyDown}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          value={searchText}
+          onChange={(e) => {
+            setSearchText(e.target.value);
+            setDebouncedTerm(e.target.value);
+          }}
           placeholder="url, albums, songs..."
           id="url"
         />
         <Button
           variant="outline"
           type="submit"
-          onClick={(_) => handleSearch(searchTerm)}
+          onClick={(_) =>
+            queryClient.invalidateQueries({
+              queryKey: [
+                "get",
+                "/api/v1/am/search",
+                { params: { query: { term: debouncedTerm } } },
+              ],
+            })
+          }
         >
           Search
         </Button>
       </div>
-      <div className="dark:scheme-dark max-h-[70vh] overflow-y-auto min-w-0 w-full my-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 -top-128 -mb-128">
+      <div className="dark:scheme-dark max-h-[70vh] overflow-y-auto grow-1 w-full my-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
           {items.map((item, index) => {
             return (
               <div key={index} className="flex flex-col rounded-lg border">
@@ -123,11 +128,10 @@ function Search() {
                         variant="secondary"
                         size="icon"
                         onClick={async (_) => {
-                          await axios.put(
-                            "/api/v1/discord/queue",
-                            { url: item.url },
-                            { headers }
-                          );
+                          await useQueueMutation.mutate({
+                            body: { url: item.url },
+                            params: { header },
+                          });
                           setItems((oldItems) => {
                             oldItems[index].discordAdded = true;
                             return oldItems;
@@ -142,10 +146,12 @@ function Search() {
                       variant="secondary"
                       size="icon"
                       onClick={async (_) => {
-                        const { status } = await submitJob(item.url);
+                        await useSubmitJob.mutateAsync({
+                          body: { url: item.url },
+                        });
 
                         setItems((oldItems) => {
-                          if (status === 200) {
+                          if (useSubmitJob.status) {
                             oldItems[index].downloadState = "ok";
                           } else {
                             oldItems[index].downloadState = "failed";

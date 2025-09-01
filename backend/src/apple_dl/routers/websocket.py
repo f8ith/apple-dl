@@ -1,5 +1,4 @@
-from logging import getLogger
-from typing import Any, Callable, cast, Tuple
+from typing import Any, Callable, Sequence, cast
 
 import socketio
 
@@ -26,15 +25,25 @@ sio: TypedAsyncServer = cast(
     ),
 )
 
-
 async def notify_job_done(_: int) -> None:
     logger.info("gamdl job done")
     await sio.emit("status_update")
 
-async def player_state_changed(data: dict[str, Any]) -> None:
+async def player_state_changed(player_id: str, data: dict[str, Any]) -> None:
     logger.info("player state changed")
-    await sio.emit("player_state_changed", data)
+    await sio.emit("player_state_changed", data, to=player_id)
 
+async def player_queue_changed(player_id: str, data: Sequence[dict[str, Any]]) -> None:
+    logger.info("player queue changed")
+    await sio.emit("player_queue_changed", data, room=player_id)
+
+@sio.on("register_player_id")
+async def register_player_id(sid, data):
+    player_id = data.get("player-id")
+    if not player_id:
+        return
+
+    await sio.enter_room(sid, player_id)
 
 def get_asgi_app():
     return socketio.ASGIApp(

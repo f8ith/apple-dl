@@ -8,6 +8,7 @@ class Config:
     GAMDL_DIR = Path(os.environ.get("GAMDL_DIR", "."))
     CACHE_DIR = Path(os.environ.get("CACHE_DIR", "/var/cache"))
     MUSIC_DIR = Path(os.environ.get("MUSIC_DIR", CACHE_DIR / "music"))
+    AM_LANGUAGE = os.environ.get("AM_LANGUAGE", "en-US")
     ALLOW_ORIGINS = []
     DISCORD_CLIENT_ID = os.environ.get("DISCORD_CLIENT_ID", "")
     DISCORD_CLIENT_SECRET = os.environ.get("DISCORD_CLIENT_SECRET", "")

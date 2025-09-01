@@ -7,6 +7,8 @@ interface JobsProviderProps {
   children: React.ReactNode;
 }
 
+let didInit = false;
+
 export default function JobsProvider({ children }: JobsProviderProps) {
   const [jobs, setJobs] = useState<any[]>([]);
   const { registerHandler } = useSocket();
@@ -19,7 +21,7 @@ export default function JobsProvider({ children }: JobsProviderProps) {
   }, []);
 
   const submitJob = useCallback(async (url: string) => {
-    const result = await axios.put("/api/v1/jobs/submit", { url: url });
+    const result = await axios.post("/api/v1/jobs/submit", { url: url });
     return { data: result.data, status: result.status };
   }, []);
 
@@ -32,13 +34,16 @@ export default function JobsProvider({ children }: JobsProviderProps) {
     [jobs, getJobs, submitJob]
   );
 
-  useEffect(() => {
-    function onStatusUpdate() {
-      console.log("received status_update");
-      getJobs();
-    }
+  const onStatusUpdate = () => {
+    console.log("received status_update");
+    getJobs();
+  };
 
-    registerHandler("status_update", onStatusUpdate);
+  useEffect(() => {
+    if (!didInit) {
+      didInit = true;
+      registerHandler("status_update", onStatusUpdate);
+    }
   }, []);
 
   useEffect(() => {

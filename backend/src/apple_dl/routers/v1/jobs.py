@@ -1,6 +1,8 @@
 import asyncio
 from contextlib import asynccontextmanager
+from typing import List
 
+from apple_dl.schemas.job_schemas import GamdlJobSchema
 from fastapi import FastAPI, APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -32,7 +34,7 @@ async def submit_job(job_req: JobReq):
 
 
 @router.get("/all")
-async def get_jobs():
+async def get_jobs() -> List[GamdlJobSchema]:
     jobs = job_state()
     jobs_pydantic = [job.__pydantic__() for job in jobs]
     return jobs_pydantic

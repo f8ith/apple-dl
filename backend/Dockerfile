@@ -9,10 +9,11 @@ ENV HOSTNAME="apple-dl"
 
 RUN mkdir -p /config/
 RUN mkdir -p /logs
+RUN mkdir -p /downloads
+
 RUN chown -R appledl:appledl /config
 RUN chown -R appledl:appledl /logs
-
-RUN mkdir -p /downloads
+RUN chown -R appledl:appledl /downloads
 
 # dependencies
 # RUN --mount=type=cache,target=/var/cache/apk \
@@ -35,7 +36,6 @@ ENV PYTHONUNBUFFERED=1 \
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --no-cache-dir poetry
 
-FROM deps AS build
 WORKDIR /repo/backend
 COPY ./pyproject.toml /repo/backend/
 COPY ./README.md /repo/backend/
@@ -45,6 +45,7 @@ COPY ./src/ /repo/backend/src/
 
 RUN poetry install
 
+FROM deps AS build
 # Extract version from pyproject.toml
 RUN mkdir -p /version
 RUN python -c "import tomllib; print(tomllib.load(open('/repo/backend/pyproject.toml', 'rb'))['tool']['poetry']['version'])" > /version/backend.txt
@@ -56,8 +57,8 @@ RUN python -c "import tomllib; print(tomllib.load(open('/repo/backend/pyproject.
 
 FROM deps AS prod
 
-ENV IB_SERVER_CONFIG="prod"
 ENV GAMDL_DIR="/config/"
+ENV MUSIC_DIR="/downloads"
 ENV GUNICORN_CMD_ARGS="--bind=0.0.0.0:8000 --workers=1"
 
 WORKDIR /repo/backend
@@ -76,4 +77,4 @@ EXPOSE 8000
 
 #CMD ["uvicorn", "apple_dl:create_app()", "--port", "6887"]
 #CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "apple_dl:create_app()"]
-CMD ["fastapi", "run", "backend/src/apple_dl/main.py", "--proxy-headers", "--port", "8000"]
+CMD ["fastapi", "run", "/repo/backend/src/apple_dl/main.py", "--proxy-headers", "--port", "8000"]

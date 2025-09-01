@@ -2,7 +2,7 @@ services:
   apple-dl-ui:
     build: ./frontend
     container_name: apple-dl-ui
-    image: f8ith/apple-dl-ui:stable
+    image: f8ith/apple-dl-ui:git
     ports:
       - "0.0.0.0:6887:6887"
     env_file:
@@ -11,7 +11,7 @@ services:
   apple-dl-server:
     build: ./backend
     container_name: apple-dl-server
-    image: f8ith/apple-dl-server:stable
+    image: f8ith/apple-dl-server:git
     volumes:
       - /etc/appledl-docker:/config
       - /etc/music/:/downloads

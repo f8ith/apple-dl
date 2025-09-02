@@ -20,7 +20,7 @@ export const Route = createFileRoute("/discord-bot")({
   },
   beforeLoad: ({ search }) => {
     if (search.player_id) {
-      sessionStorage.setItem("player_id", search.player_id);
+      sessionStorage.setItem("player_id", JSON.stringify(search.player_id));
     }
 
     // Return or redirect as needed

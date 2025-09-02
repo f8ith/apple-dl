@@ -127,8 +127,8 @@ function Search() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
           {items.map((item, index) => {
             return (
-              <Link disabled={item.type != "albums"} key={index} to={`/album/$albumId`} params={{albumId: item.id.toString()}}>
               <div key={index} className="flex flex-col rounded-lg border">
+                <Link disabled={item.type != "albums"} key={index} to={`/album/$albumId`} params={{albumId: item.id.toString()}}>
                 <div className="flex flex-row gap-4 items-center p-2">
                   <div className="w-32 h-32 shrink-0 p-2">
                     <img
@@ -142,6 +142,7 @@ function Search() {
                     <CardDescription>{item.shortLabel}</CardDescription>
                   </div>
                 </div>
+                </Link>
                 <div className="relative">
                   <div className="absolute flex flex-row gap-2 bottom-2 right-2">
                     {discordEnabled && enabledItemTypes.includes(item.type) && (
@@ -195,7 +196,6 @@ function Search() {
                   </div>
                 </div>
               </div>
-</Link>
             );
           })}
         </div>

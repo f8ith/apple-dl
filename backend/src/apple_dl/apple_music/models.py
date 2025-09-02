@@ -15,9 +15,9 @@ class AMArtwork(BaseModel):
 
 
 class PlayParams(BaseModel):
-    id: str
-    kind: str
-    versionHash: str | None = None
+    id: str = ""
+    kind: str = ""
+    versionHash: str = ""
 
 
 class AMContentVersion(BaseModel):
@@ -29,32 +29,32 @@ class AMAlbumAttributes(BaseModel):
     artistName: str
     artwork: AMArtwork | None = None
     audioTraits: List[str] = []
-    copyright: str
+    copyright: str = ""
     genreNames: List[str] = []
     isCompilation: bool
     isComplete: bool
     isMasteredForItunes: bool
-    isPrerelease: bool
-    isSingle: bool
+    isPrerelease: bool = False
+    isSingle: bool = False
     name: str
     playParams: PlayParams
-    recordLabel: str
+    recordLabel: str = ""
     releaseDate: str
     trackCount: int
-    upc: str
+    upc: str = ""
     url: str
 
 
 class AMArtistAttributes(BaseModel):
     artwork: AMArtwork | None = None
-    genreNames: List[str]
+    genreNames: List[str] = []
     name: str
     url: str
 
 
 class AMArtist(BaseModel):
-    id: str | None = None
-    type: str | None = None
+    id: str = ""
+    type: str = ""
     href: str
     attributes: AMArtistAttributes | None = None
     relationships: "AMArtistRelationships | None" = None
@@ -79,13 +79,13 @@ class Preview(BaseModel):
 
 
 class AMSongAttributes(BaseModel):
-    albumName: str
-    artistName: str
+    albumName: str = ""
+    artistName: str = ""
     artwork: AMArtwork | None = None
-    audioLocale: str
+    audioLocale: str = ""
     audioTraits: List[str] = []
-    composerName: str
-    discNumber: int
+    composerName: str = ""
+    discNumber: int = 0
     durationInMillis: int
     extendedAssetUrls: ExtendedAssetUrls | None = None
     genreNames: List[str]
@@ -94,25 +94,25 @@ class AMSongAttributes(BaseModel):
     isAppleDigitalMaster: bool
     isMasteredForItunes: bool
     isVocalAttenuationAllowed: bool
-    isrc: str
+    isrc: str = ""
     name: str
     playParams: PlayParams
     previews: List[Preview] = []
-    releaseDate: str
-    trackNumber: int
+    releaseDate: str = ""
+    trackNumber: int = 0
     url: str
 
 
 class AMSong(BaseModel):
-    id: str | None = None
-    type: str | None = None
+    id: str = ""
+    type: str = ""
     href: str
     attributes: AMSongAttributes
 
 
 class AMSongs(BaseModel):
     href: str
-    next: str | None = None
+    next: str = ""
     data: List[AMSong] = []
 
 
@@ -122,17 +122,17 @@ class AMRelationships(BaseModel):
 
 
 class AMAlbum(BaseModel):
-    id: str | None = None
-    type: str | None = None
+    id: str = ""
+    type: str = ""
     href: str
     attributes: AMAlbumAttributes | None = None
     relationships: AMRelationships | None = None
 
 
 class EditorialNotes(BaseModel):
-    name: str | None
-    short: str
-    standard: str
+    name: str = ""
+    short: str = ""
+    standard: str = ""
 
 
 class ContentVersion(BaseModel):
@@ -143,7 +143,7 @@ class ContentVersion(BaseModel):
 class AMAlbums(BaseModel):
     href: str
     next: str | None = None
-    data: List[AMAlbum]
+    data: List[AMAlbum] = []
 
 
 class AMArtistRelationships(BaseModel):
@@ -151,7 +151,7 @@ class AMArtistRelationships(BaseModel):
 
 
 class Description(BaseModel):
-    standard: str
+    standard: str = ""
 
 
 class AMPlaylistAttributes(BaseModel):
@@ -160,20 +160,20 @@ class AMPlaylistAttributes(BaseModel):
     curatorName: str
     description: Description | None = None
     editorialNotes: EditorialNotes | None = None
-    editorialPlaylistKind: str
+    editorialPlaylistKind: str = ""
     hasCollaboration: bool
     isChart: bool
-    lastModifiedDate: str
+    lastModifiedDate: str = ""
     name: str
     playParams: PlayParams 
-    playlistType: str
-    supportsSing: bool
+    playlistType: str = ""
+    supportsSing: bool = False
     url: str
 
 
 class AMPlaylist(BaseModel):
-    id: str | None = None
-    type: str | None = None
+    id: str = ""
+    type: str = ""
     href: str
     attributes: AMPlaylistAttributes
 
@@ -181,7 +181,7 @@ class AMPlaylist(BaseModel):
 class AMPlaylists(BaseModel):
     href: str
     next: str | None = None
-    data: List[AMPlaylist]
+    data: List[AMPlaylist] = []
 
 
 class AMSearchResp(BaseModel):

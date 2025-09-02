@@ -1,11 +1,12 @@
-import { useDebounceValue } from "usehooks-ts";
+import { useDebounceValue, useSessionStorage } from "usehooks-ts";
 
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   AMCardData,
+  hasNextPage,
   itemTypes,
   TBaseItem,
   toAMCardData,
@@ -14,39 +15,44 @@ import {
 import { CheckIcon, DownloadIcon, XIcon } from "lucide-react";
 import { SiDiscord } from "@icons-pack/react-simple-icons";
 import { useJobs } from "@/hooks/use-jobs";
-import { usePersistState } from "@/hooks/use-persist-state";
 import { useDiscord } from "@/hooks/use-discord";
 import { $api } from "@/lib/api";
-import { useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
-
+import { InfiniteData, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 
 export const Route = createFileRoute("/search")({
   component: Search,
 });
 
 function Search() {
-  const [searchText, setSearchText] = usePersistState<string>("searchText", "");
+  const [searchText, setSearchText] = useSessionStorage<string>("searchText", "");
   const [debouncedTerm, setDebouncedTerm] = useDebounceValue(searchText, 500);
   const { useSubmitJob } = useJobs();
-  const [items, setItems] = usePersistState<AMCardData[]>("searchItems", []);
-  const { header, discordEnabled, enabledItemTypes, useQueueMutation } =
-    useDiscord();
+  const [items, setItems] = useSessionStorage<AMCardData[]>("searchItems", []);
+  const {
+    header,
+    discordEnabled,
+    discordEnabledItemTypes: enabledItemTypes,
+    useQueueMutation,
+  } = useDiscord();
 
-const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-
-  const handleSearch = (data: any) => {
-    setItems([])
+  const handleSearch = (data: InfiniteData<any, any>) => {
+    console.log(data);
+    setItems([]);
     const newItems: AMCardData[] = [];
 
-    for (const itemType of itemTypes) {
-      if (data[itemType]) {
-        newItems.push(
-          ...data[itemType].data.map((val: TBaseItem, index: number) => {
-            return toAMCardData(val, index);
-          })
-        );
+    for (const page of data.pages) {
+      for (const itemType of itemTypes) {
+        if (page[itemType]) {
+          newItems.push(
+            ...page[itemType].data.map((val: TBaseItem, index: number) => {
+              return toAMCardData(val, index);
+            })
+          );
+        }
       }
     }
 
@@ -56,26 +62,38 @@ const queryClient = useQueryClient();
       else return 1;
     });
 
-    console.log(newItems)
+    if (scrollRef.current && data.pages.length <= 1) {
+      scrollRef.current.scrollTop = 0;
+    }
+
     setItems(newItems);
   };
 
-  const useSearchQuery = $api.useQuery("get", "/api/v1/am/search", {
-    params: { query: { term: debouncedTerm } },
-  });
-
+  const useSearchQuery = $api.useInfiniteQuery(
+    "get",
+    "/api/v1/am/search",
+    {
+      params: { query: { term: debouncedTerm } },
+    },
+    {
+      getNextPageParam: (lastPage: any) => {
+        return hasNextPage(lastPage) ? lastPage.offset + 25 : null;
+      },
+      initialPageParam: 0,
+      pageParamName: "offset",
+    }
+  );
 
   useEffect(() => {
     if (useSearchQuery.isSuccess && useSearchQuery.data) {
       handleSearch(useSearchQuery.data);
     }
-    }, [useSearchQuery.isSuccess, useSearchQuery.data]);
-
+  }, [useSearchQuery.isSuccess, useSearchQuery.data]);
 
   //TODO width broken
   return (
     <main className="flex flex-col items-start justify-start grow-1 p-8">
-      <div className="flex flex-row items-start gap-4">
+      <div className="flex flex-row container items-start gap-4 px-8">
         <Input
           autoFocus={true}
           value={searchText}
@@ -102,10 +120,14 @@ const queryClient = useQueryClient();
           Search
         </Button>
       </div>
-      <div className="dark:scheme-dark max-h-[70vh] overflow-y-auto grow-1 w-full my-4">
+      <div
+        ref={scrollRef}
+        className="dark:scheme-dark max-h-[70vh] overflow-y-auto grow-1 w-full my-4"
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
           {items.map((item, index) => {
             return (
+              <Link disabled={item.type != "albums"} key={index} to={`/album/$albumId`} params={{albumId: item.id.toString()}}>
               <div key={index} className="flex flex-col rounded-lg border">
                 <div className="flex flex-row gap-4 items-center p-2">
                   <div className="w-32 h-32 shrink-0 p-2">
@@ -173,10 +195,24 @@ const queryClient = useQueryClient();
                   </div>
                 </div>
               </div>
+</Link>
             );
           })}
         </div>
       </div>
+      {items.length > 0 && <Button
+        variant="outline"
+        type="submit"
+        onClick={() => useSearchQuery.fetchNextPage()}
+        disabled={!hasNextPage || useSearchQuery.isFetching}
+        className="flex flex-row items-end justify-end self-end"
+      >
+        {useSearchQuery.isFetchingNextPage
+          ? "Loading more..."
+          : useSearchQuery.hasNextPage
+          ? "Load More"
+          : "Nothing more to load"}
+      </Button>}
     </main>
   );
 }

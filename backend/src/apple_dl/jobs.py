@@ -10,7 +10,7 @@ from apple_dl.schemas.job_schemas import GamdlJobResultSchema, GamdlJobSchema
 from gamdl.models import DownloadInfo
 from gamdl.exceptions import MediaFileAlreadyExistsException, MediaFormatNotAvailableException, MediaNotStreamableException
 
-from .apple_music_api import apple_music, downloader, downloader_song, parse_url_info_utf8
+from .apple_music.downloader import apple_music, downloader, downloader_song, parse_url_info_utf8
 from .config import cfg
 from .logger import logger
 from .routers.websocket import notify_job_done
@@ -42,8 +42,10 @@ class GamdlJob:
                 media_info = apple_music.get_album(self.media_id)
         elif self.url_type == "music-video":
             media_info = apple_music.get_music_video(self.media_id)
+        elif self.url_type == "playlist":
+            media_info = apple_music.get_music_video(self.media_id)
         else:
-            raise ValueError("only songs, albums and videos allowed")
+            raise ValueError("only songs, albums, playlists and videos allowed")
 
         if not media_info:
             raise ValueError(f"unable to retrieve media_info for {self.url}")

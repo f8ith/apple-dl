@@ -32,8 +32,8 @@ function Jobs() {
   };
 
   return (
-    <main className="flex flex-col items-start justify-start grow-1 mb-auto p-8">
-      <div className="flex flex-row w-full items-start gap-4">
+    <main className="flex flex-col items-start container justify-start mb-auto p-8">
+      <div className="flex flex-row items-start w-full gap-4">
         <Input
           autoFocus={true}
           onKeyDown={onKeyDown}

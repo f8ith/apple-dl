@@ -1,10 +1,12 @@
 import re
+from typing import Literal
 import urllib.parse
 
 from gamdl import AppleMusicApi, ItunesApi, Downloader, DownloaderSong
 from gamdl.models import UrlInfo
 
 from apple_dl.config import cfg
+
 
 VALID_URL_RE = (
     r"("
@@ -20,6 +22,8 @@ VALID_URL_RE = (
     r"/(?P<library_id>p\.[a-zA-Z0-9]{15}|l\.[a-zA-Z0-9]{7})"
     r")"
 )
+
+AM_ITEM_TYPES = Literal["songs","albums","artists","playlists"]
 
 def parse_url_info_utf8(url: str) -> UrlInfo | None:
     url = urllib.parse.unquote(url)

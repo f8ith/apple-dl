@@ -145,7 +145,7 @@ async def post_queue(request: Request, job_req: JobReq):
         for result in job.job_result:
             song = Song(result)
             player_manager.add_song(request.state.player, song)
-            return {}
+        return {}
 
 
 router = APIRouter(prefix="/discord", lifespan=lifespan)

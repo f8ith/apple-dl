@@ -1,5 +1,18 @@
 import { useDiscord } from "@/hooks/use-discord";
 import { getOrDefaultImage } from "@/lib/apple-music";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
@@ -13,6 +26,7 @@ import {
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useDebounceCallback, useInterval } from "usehooks-ts";
+import { SiDiscord } from "@icons-pack/react-simple-icons";
 
 export default function PlaybackBar() {
   const {
@@ -22,6 +36,7 @@ export default function PlaybackBar() {
     usePlayerStateSubscription,
     usePlayPause,
     useSkip,
+    disconnect,
   } = useDiscord();
   const headers = header;
   const [volume, setVolume] = useState<number>(33);
@@ -77,7 +92,10 @@ export default function PlaybackBar() {
         return old;
       });
     },
-    !userSeeked && playerState && playerState.current_song && !playerState.is_paused
+    !userSeeked &&
+      playerState &&
+      playerState.current_song &&
+      !playerState.is_paused
       ? 5
       : null
   );
@@ -115,7 +133,8 @@ export default function PlaybackBar() {
                 <div className="flex flex-col">
                   <p>{playerState.current_song.name}</p>
                   <p className="text-sm text-muted-foreground truncated">
-                    {playerState.current_song.artist_name} — {playerState.current_song.album_name}
+                    {playerState.current_song.artist_name} —{" "}
+                    {playerState.current_song.album_name}
                   </p>
                 </div>
               </div>
@@ -145,6 +164,32 @@ export default function PlaybackBar() {
               />
             </div>
             <div className="flex-1 flex flex-row rounded-lg items-center gap-4 justify-end">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <SiDiscord />
+                </PopoverTrigger>
+                <PopoverContent className="z-[200] w-80">
+                  <Card className="w-full ml-auto max-w-sm">
+                    <CardHeader>
+                      <CardTitle>{playerState.guild_name}</CardTitle>
+                      <CardDescription>
+                        connected to #{playerState.channel_name}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardFooter className="flex-col gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={(_) => {
+                          disconnect();
+                        }}
+                      >
+                        {/* TODO Side effect: navigates to /discord-bot */}
+                        Disconnect
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                </PopoverContent>
+              </Popover>
               <MicVocal
                 onClick={() => {
                   toggleSidebar();

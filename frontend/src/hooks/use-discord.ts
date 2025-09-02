@@ -6,9 +6,11 @@ import { $api } from "@/lib/api";
 import { TItemType } from "@/lib/apple-music";
 import { components, paths } from "@/openapi-schema";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSessionStorage } from "usehooks-ts";
+import { socket } from "@/lib/socket";
 
 export function useDiscord() {
-  const [playerId, setPlayerId] = usePersistString("player_id", "");
+  const [playerId, setPlayerId, removePlayerId] = useSessionStorage<string>("player_id", "");
   const header = useMemo(
     () => ({
       "player-id": playerId,
@@ -16,10 +18,10 @@ export function useDiscord() {
     [playerId]
   );
 
-  const enabledItemTypes: TItemType[] = ["songs"];
+  const discordEnabledItemTypes: TItemType[] = ["songs", "albums", "playlists"];
 
   const { registerHandler, emitEvent } = useSocket();
-  const [discordEnabled, setDiscordEnabled] = useState(false);
+  const [discordEnabled, setDiscordEnabled] = useState(playerId != "");
 
   const connect = () => {
     if (discordEnabled) return;
@@ -28,7 +30,7 @@ export function useDiscord() {
   };
 
   const disconnect = () => {
-    setPlayerId("");
+    removePlayerId();
     setDiscordEnabled(false);
   };
 
@@ -101,6 +103,11 @@ export function useDiscord() {
 
   const usePlayerStateSubscription = () => {
     const queryClient = useQueryClient();
+
+    socket.emit("register_player_id", {
+      "player-id": playerId
+    })
+
     useEffect(() => {
       console.log("register player state");
       registerHandler(
@@ -165,6 +172,6 @@ export function useDiscord() {
     useQueueMutation,
     useQueueSubscription,
     header,
-    enabledItemTypes,
+    discordEnabledItemTypes,
   };
 }

@@ -13,6 +13,7 @@ import { Route as SearchRouteImport } from './routes/search'
 import { Route as JobsRouteImport } from './routes/jobs'
 import { Route as DiscordBotRouteImport } from './routes/discord-bot'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AlbumAlbumIdRouteImport } from './routes/album.$albumId'
 
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
@@ -34,18 +35,25 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AlbumAlbumIdRoute = AlbumAlbumIdRouteImport.update({
+  id: '/album/$albumId',
+  path: '/album/$albumId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/discord-bot': typeof DiscordBotRoute
   '/jobs': typeof JobsRoute
   '/search': typeof SearchRoute
+  '/album/$albumId': typeof AlbumAlbumIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/discord-bot': typeof DiscordBotRoute
   '/jobs': typeof JobsRoute
   '/search': typeof SearchRoute
+  '/album/$albumId': typeof AlbumAlbumIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +61,20 @@ export interface FileRoutesById {
   '/discord-bot': typeof DiscordBotRoute
   '/jobs': typeof JobsRoute
   '/search': typeof SearchRoute
+  '/album/$albumId': typeof AlbumAlbumIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/discord-bot' | '/jobs' | '/search'
+  fullPaths: '/' | '/discord-bot' | '/jobs' | '/search' | '/album/$albumId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/discord-bot' | '/jobs' | '/search'
-  id: '__root__' | '/' | '/discord-bot' | '/jobs' | '/search'
+  to: '/' | '/discord-bot' | '/jobs' | '/search' | '/album/$albumId'
+  id:
+    | '__root__'
+    | '/'
+    | '/discord-bot'
+    | '/jobs'
+    | '/search'
+    | '/album/$albumId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,6 +82,7 @@ export interface RootRouteChildren {
   DiscordBotRoute: typeof DiscordBotRoute
   JobsRoute: typeof JobsRoute
   SearchRoute: typeof SearchRoute
+  AlbumAlbumIdRoute: typeof AlbumAlbumIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -99,6 +115,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/album/$albumId': {
+      id: '/album/$albumId'
+      path: '/album/$albumId'
+      fullPath: '/album/$albumId'
+      preLoaderRoute: typeof AlbumAlbumIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -107,6 +130,7 @@ const rootRouteChildren: RootRouteChildren = {
   DiscordBotRoute: DiscordBotRoute,
   JobsRoute: JobsRoute,
   SearchRoute: SearchRoute,
+  AlbumAlbumIdRoute: AlbumAlbumIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

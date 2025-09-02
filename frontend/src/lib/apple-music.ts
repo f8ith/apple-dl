@@ -14,6 +14,7 @@ export interface TBaseItem {
 }
 
 export interface AMCardData {
+  id: number;
   name: string;
   artistName: string;
   albumName: string | null;
@@ -39,9 +40,20 @@ export function getShortLabel(val: components["schemas"]["SongSchema"]) {
   }`;
 }
 
+export function hasNextPage(val: any) {
+  for (const type of itemTypes) {
+    if (val[type]) {
+      if (val[type].next)
+        return true
+    }
+  }
+  return false
+}
+
 export function toAMCardData(val: TBaseItem, index: number = 0): AMCardData {
   const attributes = val.attributes;
   return {
+    id: val.id,
     name: attributes.name,
     artistName: attributes.artistName,
     albumName: attributes.albumName,

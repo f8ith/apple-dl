@@ -21,6 +21,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/am/album": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Album */
+        get: operations["album_api_v1_am_album_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/discord/player_state": {
         parameters: {
             query?: never;
@@ -315,11 +332,292 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AMAlbum */
+        AMAlbum: {
+            /** Id */
+            id?: string | null;
+            /** Type */
+            type?: string | null;
+            /** Href */
+            href: string;
+            attributes?: components["schemas"]["AMAlbumAttributes"] | null;
+            relationships?: components["schemas"]["AMRelationships"] | null;
+        };
+        /** AMAlbumAttributes */
+        AMAlbumAttributes: {
+            /** Artistname */
+            artistName: string;
+            artwork?: components["schemas"]["AMArtwork"] | null;
+            /**
+             * Audiotraits
+             * @default []
+             */
+            audioTraits: string[];
+            /** Copyright */
+            copyright: string;
+            /**
+             * Genrenames
+             * @default []
+             */
+            genreNames: string[];
+            /** Iscompilation */
+            isCompilation: boolean;
+            /** Iscomplete */
+            isComplete: boolean;
+            /** Ismasteredforitunes */
+            isMasteredForItunes: boolean;
+            /** Isprerelease */
+            isPrerelease: boolean;
+            /** Issingle */
+            isSingle: boolean;
+            /** Name */
+            name: string;
+            playParams: components["schemas"]["PlayParams"];
+            /** Recordlabel */
+            recordLabel: string;
+            /** Releasedate */
+            releaseDate: string;
+            /** Trackcount */
+            trackCount: number;
+            /** Upc */
+            upc: string;
+            /** Url */
+            url: string;
+        };
+        /** AMAlbums */
+        AMAlbums: {
+            /** Href */
+            href: string;
+            /** Next */
+            next?: string | null;
+            /** Data */
+            data: components["schemas"]["AMAlbum"][];
+        };
+        /** AMArtist */
+        AMArtist: {
+            /** Id */
+            id?: string | null;
+            /** Type */
+            type?: string | null;
+            /** Href */
+            href: string;
+            attributes?: components["schemas"]["AMArtistAttributes"] | null;
+            relationships?: components["schemas"]["AMArtistRelationships"] | null;
+        };
+        /** AMArtistAttributes */
+        AMArtistAttributes: {
+            artwork?: components["schemas"]["AMArtwork"] | null;
+            /** Genrenames */
+            genreNames: string[];
+            /** Name */
+            name: string;
+            /** Url */
+            url: string;
+        };
+        /** AMArtistRelationships */
+        AMArtistRelationships: {
+            albums: components["schemas"]["AMAlbum"];
+        };
+        /** AMArtists */
+        AMArtists: {
+            /** Href */
+            href: string;
+            /** Next */
+            next?: string | null;
+            /**
+             * Data
+             * @default []
+             */
+            data: components["schemas"]["AMArtist"][];
+        };
+        /** AMArtwork */
+        AMArtwork: {
+            /** Bgcolor */
+            bgColor: string;
+            /** Hasp3 */
+            hasP3: boolean;
+            /** Height */
+            height: number;
+            /** Textcolor1 */
+            textColor1: string;
+            /** Textcolor2 */
+            textColor2: string;
+            /** Textcolor3 */
+            textColor3: string;
+            /** Textcolor4 */
+            textColor4: string;
+            /** Url */
+            url: string;
+            /** Width */
+            width: number;
+        };
+        /** AMPlaylist */
+        AMPlaylist: {
+            /** Id */
+            id?: string | null;
+            /** Type */
+            type?: string | null;
+            /** Href */
+            href: string;
+            attributes: components["schemas"]["AMPlaylistAttributes"];
+        };
+        /** AMPlaylistAttributes */
+        AMPlaylistAttributes: {
+            artwork?: components["schemas"]["AMArtwork"] | null;
+            /**
+             * Audiotraits
+             * @default []
+             */
+            audioTraits: string[];
+            /** Curatorname */
+            curatorName: string;
+            description?: components["schemas"]["Description"] | null;
+            editorialNotes?: components["schemas"]["EditorialNotes"] | null;
+            /** Editorialplaylistkind */
+            editorialPlaylistKind: string;
+            /** Hascollaboration */
+            hasCollaboration: boolean;
+            /** Ischart */
+            isChart: boolean;
+            /** Lastmodifieddate */
+            lastModifiedDate: string;
+            /** Name */
+            name: string;
+            playParams: components["schemas"]["PlayParams"];
+            /** Playlisttype */
+            playlistType: string;
+            /** Supportssing */
+            supportsSing: boolean;
+            /** Url */
+            url: string;
+        };
+        /** AMPlaylists */
+        AMPlaylists: {
+            /** Href */
+            href: string;
+            /** Next */
+            next?: string | null;
+            /** Data */
+            data: components["schemas"]["AMPlaylist"][];
+        };
+        /** AMRelationships */
+        AMRelationships: {
+            artists: components["schemas"]["AMArtists"];
+            tracks: components["schemas"]["AMSongs"];
+        };
+        /** AMSearchResp */
+        AMSearchResp: {
+            albums?: components["schemas"]["AMAlbums"] | null;
+            artists?: components["schemas"]["AMArtists"] | null;
+            playlists?: components["schemas"]["AMPlaylists"] | null;
+            songs?: components["schemas"]["AMSongs"] | null;
+            /** Offset */
+            offset?: number | null;
+        };
+        /** AMSong */
+        AMSong: {
+            /** Id */
+            id?: string | null;
+            /** Type */
+            type?: string | null;
+            /** Href */
+            href: string;
+            attributes: components["schemas"]["AMSongAttributes"];
+        };
+        /** AMSongAttributes */
+        AMSongAttributes: {
+            /** Albumname */
+            albumName: string;
+            /** Artistname */
+            artistName: string;
+            artwork?: components["schemas"]["AMArtwork"] | null;
+            /** Audiolocale */
+            audioLocale: string;
+            /**
+             * Audiotraits
+             * @default []
+             */
+            audioTraits: string[];
+            /** Composername */
+            composerName: string;
+            /** Discnumber */
+            discNumber: number;
+            /** Durationinmillis */
+            durationInMillis: number;
+            extendedAssetUrls?: components["schemas"]["ExtendedAssetUrls"] | null;
+            /** Genrenames */
+            genreNames: string[];
+            /** Haslyrics */
+            hasLyrics: boolean;
+            /** Hastimesyncedlyrics */
+            hasTimeSyncedLyrics: boolean;
+            /** Isappledigitalmaster */
+            isAppleDigitalMaster: boolean;
+            /** Ismasteredforitunes */
+            isMasteredForItunes: boolean;
+            /** Isvocalattenuationallowed */
+            isVocalAttenuationAllowed: boolean;
+            /** Isrc */
+            isrc: string;
+            /** Name */
+            name: string;
+            playParams: components["schemas"]["PlayParams"];
+            /**
+             * Previews
+             * @default []
+             */
+            previews: components["schemas"]["Preview"][];
+            /** Releasedate */
+            releaseDate: string;
+            /** Tracknumber */
+            trackNumber: number;
+            /** Url */
+            url: string;
+        };
+        /** AMSongs */
+        AMSongs: {
+            /** Href */
+            href: string;
+            /** Next */
+            next?: string | null;
+            /**
+             * Data
+             * @default []
+             */
+            data: components["schemas"]["AMSong"][];
+        };
+        /** Description */
+        Description: {
+            /** Standard */
+            standard: string;
+        };
         /**
          * DiscordPlayerModes
          * @enum {string}
          */
         DiscordPlayerModes: "normal" | "repeat" | "loop";
+        /** EditorialNotes */
+        EditorialNotes: {
+            /** Name */
+            name: string | null;
+            /** Short */
+            short: string;
+            /** Standard */
+            standard: string;
+        };
+        /** ExtendedAssetUrls */
+        ExtendedAssetUrls: {
+            /** Enhancedhls */
+            enhancedHls: string;
+            /** Lightweight */
+            lightweight: string;
+            /** Lightweightplus */
+            lightweightPlus: string;
+            /** Plus */
+            plus: string;
+            /** Superlightweight */
+            superLightweight: string;
+        };
         /** GamdlJobSchema */
         GamdlJobSchema: {
             /** Id */
@@ -355,6 +653,15 @@ export interface components {
             /** Url */
             url: string;
         };
+        /** PlayParams */
+        PlayParams: {
+            /** Id */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Versionhash */
+            versionHash?: string | null;
+        };
         /** PlayerStateSchema */
         PlayerStateSchema: {
             /** Guild Name */
@@ -373,6 +680,11 @@ export interface components {
             mode: components["schemas"]["DiscordPlayerModes"];
             /** Owner Name */
             owner_name: string;
+        };
+        /** Preview */
+        Preview: {
+            /** Url */
+            url: string;
         };
         /** SeekReq */
         SeekReq: {
@@ -437,6 +749,42 @@ export interface operations {
         parameters: {
             query: {
                 term: string;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": ("songs" | "albums" | "artists" | "playlists")[];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AMSearchResp"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    album_api_v1_am_album_get: {
+        parameters: {
+            query: {
+                id: string;
             };
             header?: never;
             path?: never;
@@ -450,7 +798,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["AMAlbum"];
                 };
             };
             /** @description Validation Error */

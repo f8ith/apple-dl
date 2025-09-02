@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { usePersistString } from "@/hooks/use-persist-state";
 import { useSocket } from "@/hooks/use-socket";
 import { $api } from "@/lib/api";
 import { TItemType } from "@/lib/apple-music";
@@ -10,7 +9,7 @@ import { useSessionStorage } from "usehooks-ts";
 import { socket } from "@/lib/socket";
 
 export function useDiscord() {
-  const [playerId, setPlayerId, removePlayerId] = useSessionStorage<string>("player_id", "");
+  const [playerId, _setPlayerId, removePlayerId] = useSessionStorage<string>("player_id", "");
   const header = useMemo(
     () => ({
       "player-id": playerId,

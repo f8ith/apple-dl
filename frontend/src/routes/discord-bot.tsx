@@ -56,8 +56,9 @@ function RouteComponent() {
             <Button
               asChild
               className="w-full"
+              variant="link"
             >
-              <Link to="/">Disconnect</Link>
+              <Link to="/">return to home</Link>
             </Button>
           </CardFooter>
         </Card>

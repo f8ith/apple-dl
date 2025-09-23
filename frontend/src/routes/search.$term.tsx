@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { hasNextPage } from "@/lib/apple-music";
 
 import { $api } from "@/lib/api";
-import { useRef } from "react";
 import { SearchTabs } from "@/components/search-tabs";
 import { components } from "@/openapi-schema";
 import { SongCard } from "@/components/song-card";
@@ -14,7 +13,6 @@ export const Route = createFileRoute("/search/$term")({
 });
 
 function Search() {
-  const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate({ from: "/search/$term/albums" });
   const { term } = Route.useParams();
 

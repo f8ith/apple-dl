@@ -4,7 +4,8 @@ export const Route = createFileRoute('/')({
   component: () => null,
   loader: () => {
     redirect({
-      to: '/search',
+      to: '/search/$term',
+      params: {term: ''},
       throw: true
     })
   }

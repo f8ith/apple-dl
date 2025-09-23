@@ -7,14 +7,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { $api } from "@/lib/api";
 import { amGetImage } from "@/lib/apple-music";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";

@@ -1,4 +1,3 @@
-from tkinter import W
 from typing import Any, Sequence
 from fastapi import APIRouter, HTTPException
 

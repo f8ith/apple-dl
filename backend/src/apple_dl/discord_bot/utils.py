@@ -21,14 +21,14 @@ async def send_embed(ctx: commands.Context, embed: Embed, ephemeral: bool = Fals
     else:
         await ctx.send(embed=embed)
 
-async def send_message(ctx: commands.Context, content: str, ephemeral: bool = False):
+async def send_message(ctx: commands.Context, content: str, ephemeral: bool = True, delete_after: float | None = 30.0, private: bool = False):
     if ctx.interaction:
-        await ctx.interaction.response.send_message(content, ephemeral=ephemeral, delete_after=300)
+        await ctx.interaction.response.send_message(content, ephemeral=ephemeral, delete_after=delete_after)
         return
 
-    if ephemeral:
+    if private:
         channel = await ctx.author.create_dm()
-        await channel.send(content)
+        await channel.send(content, delete_after=delete_after) #type: ignore
 
     else:
-        await ctx.send(content)
+        await ctx.send(content, delete_after=delete_after) #type: ignore

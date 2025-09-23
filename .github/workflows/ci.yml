@@ -3,7 +3,7 @@ name: CI
 # Configures this workflow to run every time a change is pushed to the branch called `release`.
 on:
  push:
-    branches: [development]
+    branches: [dev]
     paths:
       - frontend/**
       - backend/**

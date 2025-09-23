@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useSocket } from "@/hooks/use-socket";
 import { $api } from "@/lib/api";
 import { TItemType } from "@/lib/apple-music";
 import { components, paths } from "@/openapi-schema";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSessionStorage } from "usehooks-ts";
 import { socket } from "@/lib/socket";
 
@@ -22,32 +22,32 @@ export function useDiscord() {
   const { registerHandler, emitEvent } = useSocket();
   const [discordEnabled, setDiscordEnabled] = useState(playerId != "");
 
-  const connect = () => {
+  const connect = useCallback(() => {
     if (discordEnabled) return;
     setDiscordEnabled(true);
-    emitEvent("register_player_id", {"player-id": playerId});
-  };
+    emitEvent("register_player_id", { "player-id": playerId });
+  }, [setDiscordEnabled, emitEvent, playerId, discordEnabled]);
 
-  const disconnect = () => {
+  const disconnect = useCallback(() => {
     removePlayerId();
     setDiscordEnabled(false);
-  };
+  }, [removePlayerId]);
 
-  const playerStateQuery = $api.useQuery(
+  const playerStateOptions = () => $api.queryOptions(
     "get",
     "/api/v1/discord/player_state",
     { params: { header: header } },
     { enabled: discordEnabled }
   );
 
-  const playerQueueQuery = $api.useQuery(
+  const playerQueueOptions = () => $api.queryOptions(
     "get",
     "/api/v1/discord/queue",
     { params: { header: header } },
     { enabled: discordEnabled, initialData: [] }
   );
 
-  const validPlayerStateQuery = $api.useQuery(
+  const validPlayerStateOptions = () => $api.queryOptions(
     "get",
     "/api/v1/discord/check_state",
     { params: { header } }
@@ -78,7 +78,7 @@ export function useDiscord() {
     "put",
     "/api/v1/discord/play_pause",
   );
-  
+
   const useLoop = $api.useMutation(
     "put",
     "/api/v1/discord/loop",
@@ -89,16 +89,22 @@ export function useDiscord() {
     "/api/v1/discord/repeat",
   );
 
+  const useVolume = $api.useMutation(
+    "put",
+    "/api/v1/discord/volume"
+  )
+
+  const validPlayerState = useQuery(validPlayerStateOptions());
 
   useEffect(() => {
     // TODO Improve this spaghetti checking whether or not session is valid
-    if (validPlayerStateQuery.isSuccess && validPlayerStateQuery.data) {
-      const ok = validPlayerStateQuery.data && validPlayerStateQuery.data.valid;
+    if (validPlayerState.isSuccess) {
+      const ok = validPlayerState.data && validPlayerState.data.valid;
 
       if (ok) connect();
       else disconnect();
     }
-  }, [validPlayerStateQuery.isSuccess, validPlayerStateQuery.data]);
+  }, [validPlayerState.isSuccess, connect, disconnect]);
 
   const usePlayerStateSubscription = () => {
     const queryClient = useQueryClient();
@@ -126,7 +132,7 @@ export function useDiscord() {
           );
         }
       );
-    }, []);
+    }, [queryClient]);
   };
 
   const useQueueSubscription = () => {
@@ -150,7 +156,7 @@ export function useDiscord() {
           );
         }
       );
-    }, []);
+    }, [queryClient]);
   };
 
 
@@ -159,7 +165,7 @@ export function useDiscord() {
     discordEnabled,
     connect,
     disconnect,
-    playerState: playerStateQuery.data,
+    playerStateOptions,
     usePlayerStateSubscription,
     usePlayPause,
     useLoop,
@@ -167,7 +173,8 @@ export function useDiscord() {
     usePlayNext,
     useRemoveSong,
     useSkip,
-    queue: playerQueueQuery.data,
+    useVolume,
+    playerQueueOptions,
     useQueueMutation,
     useQueueSubscription,
     header,

@@ -13,7 +13,7 @@ interface JobsDetailDialogProps {
   job: components["schemas"]["GamdlJobSchema"] | null;
 }
 
-export default function JobsDetailDialog({
+export function JobsDetailDialog({
   isOpen,
   setOpen,
   job,

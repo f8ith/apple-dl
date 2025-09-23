@@ -13,6 +13,7 @@ class Config:
     DISCORD_CLIENT_ID = os.environ.get("DISCORD_CLIENT_ID", "")
     DISCORD_CLIENT_SECRET = os.environ.get("DISCORD_CLIENT_SECRET", "")
     DISCORD_BOT_TOKEN = os.environ.get("DISCORD_BOT_TOKEN", "")
+    DISCORD_BOT_PREFIX = os.environ.get("DISCORD_BOT_PREFIX", "!")
     DISCORD_ENABLED = bool(os.environ.get("DISCORD_ENABLED", DISCORD_BOT_TOKEN != ""))
     DISCORD_QUEUE_CAPACITY = int(os.environ.get("DISCORD_CLIENT_CAPACITY", 200))
     ENABLED_EXTENSIONS = os.environ.get("ENABLED_EXTENSIONS", "admin music").split()

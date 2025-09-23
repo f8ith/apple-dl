@@ -13,7 +13,7 @@ interface SocketProviderProps {
   children: React.ReactNode;
 }
 
-export default function SocketProvider({ children }: SocketProviderProps) {
+export function SocketProvider({ children }: SocketProviderProps) {
   const [socketConnected, setSocketConnected] = useState(false);
   const [events, setEvents] = useState<Record<string, SocketEventHandler[]>>(
     {}

@@ -1,5 +1,14 @@
+from enum import Enum
 from typing import List
 from pydantic import BaseModel
+
+
+class AMItemType(str, Enum):
+    songs = "songs"
+    artists = "artists"
+    playlists = "playlists"
+    albums = "albums"
+    music_videos = "music-videos"
 
 
 class AMArtwork(BaseModel):
@@ -37,7 +46,7 @@ class AMAlbumAttributes(BaseModel):
     isPrerelease: bool = False
     isSingle: bool = False
     name: str
-    playParams: PlayParams
+    playParams: PlayParams | None = None
     recordLabel: str = ""
     releaseDate: str
     trackCount: int
@@ -54,7 +63,7 @@ class AMArtistAttributes(BaseModel):
 
 class AMArtist(BaseModel):
     id: str = ""
-    type: str = ""
+    type: AMItemType = AMItemType.artists
     href: str
     attributes: AMArtistAttributes | None = None
     relationships: "AMArtistRelationships | None" = None
@@ -77,6 +86,33 @@ class ExtendedAssetUrls(BaseModel):
 class Preview(BaseModel):
     url: str
 
+class MusicVideoPreview(Preview):
+    hlsUrl: str = ""
+    artwork: AMArtwork | None = None
+
+class AMMusicVideoAttributes(BaseModel):
+    albumName: str = ""
+    artistName: str = ""
+    artwork: AMArtwork | None = None
+    discNumber: int = 0
+    has4K: bool 
+    hasHDR: bool
+    durationInMillis: int | None = None
+    genreNames: List[str]
+    isrc: str = ""
+    name: str
+    playParams: PlayParams | None = None
+    previews: List[MusicVideoPreview] = []
+    releaseDate: str = ""
+    trackNumber: int = 0
+    url: str
+
+
+class AMMusicVideo(BaseModel):
+    id: str = ""
+    type: AMItemType = AMItemType.songs
+    href: str
+    attributes: AMMusicVideoAttributes
 
 class AMSongAttributes(BaseModel):
     albumName: str = ""
@@ -86,7 +122,7 @@ class AMSongAttributes(BaseModel):
     audioTraits: List[str] = []
     composerName: str = ""
     discNumber: int = 0
-    durationInMillis: int
+    durationInMillis: int | None = None
     extendedAssetUrls: ExtendedAssetUrls | None = None
     genreNames: List[str]
     hasLyrics: bool
@@ -96,7 +132,7 @@ class AMSongAttributes(BaseModel):
     isVocalAttenuationAllowed: bool
     isrc: str = ""
     name: str
-    playParams: PlayParams
+    playParams: PlayParams | None = None
     previews: List[Preview] = []
     releaseDate: str = ""
     trackNumber: int = 0
@@ -105,28 +141,31 @@ class AMSongAttributes(BaseModel):
 
 class AMSong(BaseModel):
     id: str = ""
-    type: str = ""
+    type: AMItemType = AMItemType.songs
     href: str
     attributes: AMSongAttributes
-
 
 class AMSongs(BaseModel):
     href: str
     next: str = ""
     data: List[AMSong] = []
 
+class AMTracks(BaseModel):
+    href: str
+    next: str = ""
+    data: List[AMSong | AMMusicVideo] = []
 
-class AMRelationships(BaseModel):
+class AMAlbumRelationships(BaseModel):
     artists: AMArtists
-    tracks: AMSongs
+    tracks: AMTracks
 
 
 class AMAlbum(BaseModel):
     id: str = ""
-    type: str = ""
+    type: AMItemType = AMItemType.albums
     href: str
     attributes: AMAlbumAttributes | None = None
-    relationships: AMRelationships | None = None
+    relationships: AMAlbumRelationships | None = None
 
 
 class EditorialNotes(BaseModel):
@@ -147,7 +186,7 @@ class AMAlbums(BaseModel):
 
 
 class AMArtistRelationships(BaseModel):
-    albums: AMAlbum
+    albums: AMAlbums
 
 
 class Description(BaseModel):
@@ -165,7 +204,7 @@ class AMPlaylistAttributes(BaseModel):
     isChart: bool
     lastModifiedDate: str = ""
     name: str
-    playParams: PlayParams 
+    playParams: PlayParams | None = None
     playlistType: str = ""
     supportsSing: bool = False
     url: str
@@ -173,7 +212,7 @@ class AMPlaylistAttributes(BaseModel):
 
 class AMPlaylist(BaseModel):
     id: str = ""
-    type: str = ""
+    type: AMItemType = AMItemType.playlists
     href: str
     attributes: AMPlaylistAttributes
 

@@ -41,7 +41,7 @@ class Music(commands.Cog):
 
         player_id = await self.player_manager.connect_player(ctx)
 
-        message_str = f'access control panel througe: {cfg.SERVER_URL}/discord-bot?player_id={player_id}'
+        message_str = f'access control panel through: {cfg.SERVER_URL}/discord-bot?player_id={player_id}'
         await send_message(ctx, message_str, ephemeral=True)
 
     @commands.hybrid_command()

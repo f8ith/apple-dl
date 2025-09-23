@@ -13,6 +13,12 @@ export interface TBaseItem {
   type: TItemType;
 }
 
+export type AMItem = components["schemas"]["AMSong"] | components["schemas"]["AMAlbum"] |
+  components["schemas"]["AMPlaylist"] | components["schemas"]["AMArtist"];
+
+export type AMAttributes = components["schemas"]["AMSong"]["attributes"] | components["schemas"]["AMAlbum"]["attributes"] |
+  components["schemas"]["AMPlaylist"]["attributes"] | components["schemas"]["AMArtist"]["attributes"];
+
 export interface AMCardData {
   id: number;
   name: string;
@@ -28,46 +34,37 @@ export interface AMCardData {
   length: number;
 }
 
-export function getOrDefaultImage(item: components["schemas"]["SongSchema"]) {
+export function getImage(item: components["schemas"]["SongSchema"]) {
   return item.image != ""
     ? item.image.replace("{w}", "720").replace("{h}", "480")
     : UNKNOWN_RECORD_IMAGE;
 }
 
+export function amGetImage(item: AMItem, width: number = 720, height: number = 480) {
+  return item.attributes && item.attributes.artwork && item.attributes.artwork.url != ""
+    ? item.attributes.artwork.url.replace("{w}", String(width)).replace("{h}", String(height)) 
+    : UNKNOWN_RECORD_IMAGE;
+}
+
 export function getShortLabel(val: components["schemas"]["SongSchema"]) {
-  return `${val.artist_name} • ${
-    val.album_name
-  }`;
+  return `${val.artist_name} • ${val.album_name}`;
+}
+
+export function amGetShortLabel(val: AMItem) {
+  if (!val.attributes)
+    return
+
+  if ("artistName" in val.attributes)
+    return `${val.type} • ${val.attributes.artistName}`;
+  else
+    return `${val.type} • ${val.attributes.name}`;
 }
 
 export function hasNextPage(val: any) {
   for (const type of itemTypes) {
-    if (val[type]) {
-      if (val[type].next)
-        return true
+    if (type in val) {
+      if (val[type] && "next" in val[type]) return true;
     }
   }
-  return false
-}
-
-export function toAMCardData(val: TBaseItem, index: number = 0): AMCardData {
-  const attributes = val.attributes;
-  return {
-    id: val.id,
-    name: attributes.name,
-    artistName: attributes.artistName,
-    albumName: attributes.albumName,
-    shortLabel: `${val.type} • ${
-      attributes.artistName ? attributes.artistName : attributes.name
-    }`,
-    image: attributes.artwork
-      ? attributes.artwork.url.replace("{w}", 720).replace("{h}", 480)
-      : UNKNOWN_RECORD_IMAGE,
-    url: attributes.url,
-    downloadState: "notDownloaded",
-    discordAdded: false,
-    searchIndex: index,
-    type: val.type,
-    length: val.attributes.durationInMillis,
-  };
+  return false;
 }

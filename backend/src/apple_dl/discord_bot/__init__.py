@@ -12,7 +12,7 @@ from apple_dl.logger import logger
 intents = discord.Intents.default()
 intents.message_content = True
 
-bot = DiscordBot(command_prefix="!", intents=intents)
+bot = DiscordBot(command_prefix=cfg.DISCORD_BOT_PREFIX, intents=intents)
 
 
 async def run_bot():

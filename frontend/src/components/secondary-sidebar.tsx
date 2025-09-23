@@ -1,33 +1,50 @@
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarRail,
-} from "@/components/ui/sidebar"
-import { useDiscord } from "@/hooks/use-discord";
+import { useQuery } from "@tanstack/react-query";
 
-export default function SecondarySidebar() {
-  const { playerState } = useDiscord();
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useDiscord } from "@/hooks/use-discord";
+import { useLayout } from "@/hooks/use-layout";
+import { TabsContent } from "@radix-ui/react-tabs";
+import { DiscordQueue } from "./discord-queue";
+import { SecondarySidebarTabs } from "@/contexts/layout-context";
+
+export function SecondarySidebar() {
+  const { playerStateOptions } = useDiscord();
+
+  const { data: playerState } = useQuery(playerStateOptions());
+  const { secondarySidebarTab, secondarySidebarOpen, toggleTab } = useLayout();
 
   return (
-    <Sidebar variant="floating" collapsible="icon" className="dark:scheme-dark sm:max-h-[80vh] py-auto my-auto" side="right">
-     <SidebarContent className="group-data-[collapsible=icon]:w-0 duration-200 ease-linear">
-       {(playerState && playerState.current_song) && <SidebarGroup>
-          <SidebarGroupLabel className="p-0 overflow-hidden">
-            <h3 className="px-2 text-xl font-semibold leading-none tracking-tight">
-              Lyrics
-            </h3>
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-             <p className="text-sm truncated p-8 whitespace-pre-line overflow-hidden shrink-1">
-                {playerState.current_song.lyrics}
-            </p>
-         </SidebarGroupContent>
-        </SidebarGroup>}
-     </SidebarContent>
-      <SidebarRail />
-    </Sidebar>
-  )
+    <Collapsible
+      className="dark:scheme-dark"
+      open={secondarySidebarOpen}
+    >
+      <CollapsibleContent>
+        <div>
+          {playerState && playerState.current_song && (
+            <Tabs
+              value={secondarySidebarTab}
+              onValueChange={(value) =>
+                toggleTab(value as SecondarySidebarTabs)
+              }
+              className="w-[20vw] p-4"
+            >
+              <TabsList className="mb-4 w-fit">
+                <TabsTrigger value="lyrics">Lyrics</TabsTrigger>
+                <TabsTrigger value="queue">Queue</TabsTrigger>
+              </TabsList>
+              <TabsContent value="lyrics">
+                <p className="text-lg truncated p-4 whitespace-pre-line overflow-y-auto max-h-[80vh] shrink-1">
+                  {playerState.current_song.lyrics}
+                </p>
+              </TabsContent>
+              <TabsContent value="queue">
+                 <DiscordQueue />
+              </TabsContent>
+            </Tabs>
+          )}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
 }

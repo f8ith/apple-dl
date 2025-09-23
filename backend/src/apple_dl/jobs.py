@@ -10,7 +10,7 @@ from apple_dl.schemas.job_schemas import GamdlJobResultSchema, GamdlJobSchema
 from gamdl.models import DownloadInfo
 from gamdl.exceptions import MediaFileAlreadyExistsException, MediaFormatNotAvailableException, MediaNotStreamableException
 
-from .apple_music.downloader import apple_music, downloader, downloader_song, parse_url_info_utf8
+from .apple_music.downloader import apple_music, create_downloader, parse_url_info_utf8
 from .config import cfg
 from .logger import logger
 from .routers.websocket import notify_job_done
@@ -183,6 +183,7 @@ async def consume(queue: asyncio.Queue[GamdlJob]):
         loop = asyncio.get_running_loop()
 
         #job_result = GamdlJobResult(await download_url(item.url, item.output_path))
+        downloader, downloader_song = create_downloader()
         download_queue = downloader.get_download_queue(item.url_info)
 
         for download_index, media_metadata in enumerate(

@@ -1,5 +1,15 @@
-import { useDiscord } from "@/hooks/use-discord";
-import { getOrDefaultImage } from "@/lib/apple-music";
+import {
+  PlayIcon,
+  PauseIcon,
+  ForwardIcon,
+  BackwardIcon,
+} from "@heroicons/react/16/solid";
+import { SiDiscord } from "@icons-pack/react-simple-icons";
+import { List, MicVocal, Volume2Icon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useDebounceCallback, useInterval } from "usehooks-ts";
+import { useQuery } from "@tanstack/react-query";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,37 +24,29 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
-import { useSidebar } from "@/components/ui/sidebar";
-import {
-  MicVocal,
-  PauseIcon,
-  PlayIcon,
-  SkipBackIcon,
-  SkipForwardIcon,
-  Volume2Icon,
-} from "lucide-react";
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { useDebounceCallback, useInterval } from "usehooks-ts";
-import { SiDiscord } from "@icons-pack/react-simple-icons";
+import { useDiscord } from "@/hooks/use-discord";
+import { getImage } from "@/lib/apple-music";
+import { useLayout } from "@/hooks/use-layout";
+import { millisToStr } from "@/lib/utils";
 
-export default function PlaybackBar() {
+// TODO: Progress is weird when song plays
+export function PlaybackBar() {
   const {
     discordEnabled,
-    playerState,
     header,
+    playerStateOptions,
     usePlayerStateSubscription,
     usePlayPause,
     useSkip,
+    useVolume,
     disconnect,
   } = useDiscord();
-  const headers = header;
+  const { data: playerState } = useQuery(playerStateOptions());
   const [volume, setVolume] = useState<number>(33);
   const [seekTime, setSeekTime] = useState<number>(0);
-  const [volumeUpdating, setVolumeUpdating] = useState(false);
   const [userSeeked, setUserSeeked] = useState(false);
 
-  const { toggleSidebar } = useSidebar();
+  const { toggleTab } = useLayout();
 
   usePlayerStateSubscription();
 
@@ -52,28 +54,25 @@ export default function PlaybackBar() {
     if (playerState && playerState.current_song) {
       setVolume(playerState.volume * 100);
       setSeekTime(playerState.song_played ? playerState.song_played : 0);
+    } else {
+      setSeekTime(0);
     }
   }, [playerState]);
 
-  const updateVolume = async (newVolume: number) => {
+  const updateVolume = (newVolume: number) => {
     if (
       !discordEnabled ||
-      volumeUpdating ||
+      useVolume.isPending ||
       !playerState ||
       Math.abs(playerState.volume - newVolume) < 0.01
     )
       return;
 
-    setVolumeUpdating(true);
-    await axios.put(
-      "/api/v1/discord/volume",
-      { volume: newVolume },
-      { headers }
-    );
-    setVolumeUpdating(false);
+    useVolume.mutate({ params: { header }, body: { volume: newVolume } });
   };
 
   const updateSeekTime = async (_: number) => {
+    // TODO Fix seek time
     //if (!discordEnabled || !userSeeked) return;
 
     //await axios.put(
@@ -104,30 +103,17 @@ export default function PlaybackBar() {
   const debUpdateVolume = useDebounceCallback(updateVolume, 500);
 
   return (
-    playerState &&
-    playerState.current_song && (
-      <div className="fixed bottom-0 z-[100] bg-background flex flex-row w-full gap-4 items-center">
-        <div className="flex flex-col w-full">
-          <Slider
-            className="flex w-full"
-            value={[seekTime]}
-            onValueChange={(value) => {
-              setUserSeeked(true);
-              setSeekTime(value[0]);
-              debUpdateSeekTime(value[0]);
-            }}
-            defaultValue={[seekTime]}
-            max={playerState.current_song.length}
-            step={1}
-          />
-          <div className="flex flex-row w-full items-center justify-center">
-            <div className="flex-1 flex flex-col rounded-lg">
+    <div className="fixed bottom-0 p-4 h-[8vh] z-[100] bg-background flex flex-row w-full gap-4 items-center">
+      {playerState && (
+        <div className="flex flex-row w-full items-center justify-center">
+          <div className="flex-1 flex flex-col rounded-lg">
+            {playerState.current_song && (
               <div className="flex flex-row gap-4 items-center py-4">
                 <div className="max-w-[4vh] p-2">
                   <img
                     className="left-0 top-0 w-full h-full object-cover object-center transition duration-50 rounded-lg"
                     loading="lazy"
-                    src={getOrDefaultImage(playerState.current_song)}
+                    src={getImage(playerState.current_song)}
                   ></img>
                 </div>
                 <div className="flex flex-col">
@@ -138,10 +124,12 @@ export default function PlaybackBar() {
                   </p>
                 </div>
               </div>
-            </div>
-            <div className="flex flex-row rounded-lg items-center gap-4 justify-center">
-              <SkipBackIcon className="md:size-10 size-8" />
-              {playerState.is_paused ? (
+            )}
+          </div>
+          <div className="flex flex-col gap-4 items-center">
+            <div className="flex flex-row rounded-lg gap-4 justify-center">
+              <BackwardIcon className="md:size-10 size-8" />
+              {playerState && playerState.is_paused ? (
                 <PauseIcon
                   onClick={() => {
                     usePlayPause.mutate({ params: { header } });
@@ -156,61 +144,89 @@ export default function PlaybackBar() {
                   className="md:size-10 size-8"
                 />
               )}
-              <SkipForwardIcon
+              <ForwardIcon
                 onClick={() => {
                   useSkip.mutate({ params: { header } });
                 }}
                 className="md:size-10 size-8"
               />
             </div>
-            <div className="flex-1 flex flex-row rounded-lg items-center gap-4 justify-end">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <SiDiscord />
-                </PopoverTrigger>
-                <PopoverContent className="z-[200] w-80">
-                  <Card className="w-full ml-auto max-w-sm">
-                    <CardHeader>
-                      <CardTitle>{playerState.guild_name}</CardTitle>
-                      <CardDescription>
-                        connected to #{playerState.channel_name}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardFooter className="flex-col gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={(_) => {
-                          disconnect();
-                        }}
-                      >
-                        {/* TODO Side effect: navigates to /discord-bot */}
-                        Disconnect
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                </PopoverContent>
-              </Popover>
-              <MicVocal
-                onClick={() => {
-                  toggleSidebar();
-                }}
-              />
-              <Volume2Icon />
+            <div className="flex flex-row w-[16vw] justify-between">
+              <p className="flex text-sm text-muted-foreground truncated">
+                {playerState.current_song && millisToStr(seekTime)}
+              </p>
               <Slider
-                className="max-w-[20vw] md:max-w-3xs pr-8"
-                value={[volume]}
+                className="flex w-[80%]"
+                value={[seekTime]}
                 onValueChange={(value) => {
-                  setVolume(value[0]);
-                  debUpdateVolume(value[0] / 100);
+                  setUserSeeked(true);
+                  setSeekTime(value[0]);
+                  debUpdateSeekTime(value[0]);
                 }}
-                defaultValue={[volume]}
-                max={100}
+                defaultValue={[seekTime]}
+                max={
+                  playerState.current_song ? playerState.current_song.length : Infinity
+                }
                 step={1}
               />
+              <p className="flex text-sm text-muted-foreground truncated">
+                {playerState.current_song &&
+                  `-${millisToStr(playerState.current_song.length - seekTime)}`} 
+              </p>
             </div>
           </div>
+          <div className="flex-1 flex flex-row rounded-lg items-center gap-4 justify-end">
+            <Popover>
+              <PopoverTrigger asChild>
+                <SiDiscord />
+              </PopoverTrigger>
+              <PopoverContent className="z-[200] w-80">
+                <Card className="w-full ml-auto max-w-sm border-none">
+                  <CardHeader>
+                    <CardTitle>{playerState.guild_name}</CardTitle>
+                    <CardDescription>
+                      connected to #{playerState.channel_name}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardFooter className="flex-col gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        disconnect();
+                      }}
+                    >
+                      {/* TODO Side effect: navigates to /discord-bot */}
+                      Disconnect
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </PopoverContent>
+            </Popover>
+            <List
+              onClick={() => {
+                toggleTab("queue");
+              }}
+            />
+            <MicVocal
+              onClick={() => {
+                toggleTab("lyrics");
+              }}
+            />
+            <Volume2Icon />
+            <Slider
+              className="w-[16vw] pr-8"
+              value={[volume]}
+              onValueChange={(value) => {
+                setVolume(value[0]);
+                debUpdateVolume(value[0] / 100);
+              }}
+              defaultValue={[volume]}
+              max={100}
+              step={1}
+            />
+          </div>
         </div>
-      </div>
-    )
+      )}
+    </div>
   );
 }

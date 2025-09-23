@@ -38,6 +38,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/am/artist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Artist */
+        get: operations["artist_api_v1_am_artist_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/am/playlist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Playlist */
+        get: operations["playlist_api_v1_am_playlist_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/discord/player_state": {
         parameters: {
             query?: never;
@@ -334,14 +368,17 @@ export interface components {
     schemas: {
         /** AMAlbum */
         AMAlbum: {
-            /** Id */
-            id?: string | null;
-            /** Type */
-            type?: string | null;
+            /**
+             * Id
+             * @default
+             */
+            id: string;
+            /** @default albums */
+            type: components["schemas"]["AMItemType"];
             /** Href */
             href: string;
             attributes?: components["schemas"]["AMAlbumAttributes"] | null;
-            relationships?: components["schemas"]["AMRelationships"] | null;
+            relationships?: components["schemas"]["AMAlbumRelationships"] | null;
         };
         /** AMAlbumAttributes */
         AMAlbumAttributes: {
@@ -353,7 +390,10 @@ export interface components {
              * @default []
              */
             audioTraits: string[];
-            /** Copyright */
+            /**
+             * Copyright
+             * @default
+             */
             copyright: string;
             /**
              * Genrenames
@@ -366,23 +406,40 @@ export interface components {
             isComplete: boolean;
             /** Ismasteredforitunes */
             isMasteredForItunes: boolean;
-            /** Isprerelease */
+            /**
+             * Isprerelease
+             * @default false
+             */
             isPrerelease: boolean;
-            /** Issingle */
+            /**
+             * Issingle
+             * @default false
+             */
             isSingle: boolean;
             /** Name */
             name: string;
-            playParams: components["schemas"]["PlayParams"];
-            /** Recordlabel */
+            playParams?: components["schemas"]["PlayParams"] | null;
+            /**
+             * Recordlabel
+             * @default
+             */
             recordLabel: string;
             /** Releasedate */
             releaseDate: string;
             /** Trackcount */
             trackCount: number;
-            /** Upc */
+            /**
+             * Upc
+             * @default
+             */
             upc: string;
             /** Url */
             url: string;
+        };
+        /** AMAlbumRelationships */
+        AMAlbumRelationships: {
+            artists: components["schemas"]["AMArtists"];
+            tracks: components["schemas"]["AMTracks"];
         };
         /** AMAlbums */
         AMAlbums: {
@@ -390,15 +447,21 @@ export interface components {
             href: string;
             /** Next */
             next?: string | null;
-            /** Data */
+            /**
+             * Data
+             * @default []
+             */
             data: components["schemas"]["AMAlbum"][];
         };
         /** AMArtist */
         AMArtist: {
-            /** Id */
-            id?: string | null;
-            /** Type */
-            type?: string | null;
+            /**
+             * Id
+             * @default
+             */
+            id: string;
+            /** @default artists */
+            type: components["schemas"]["AMItemType"];
             /** Href */
             href: string;
             attributes?: components["schemas"]["AMArtistAttributes"] | null;
@@ -407,7 +470,10 @@ export interface components {
         /** AMArtistAttributes */
         AMArtistAttributes: {
             artwork?: components["schemas"]["AMArtwork"] | null;
-            /** Genrenames */
+            /**
+             * Genrenames
+             * @default []
+             */
             genreNames: string[];
             /** Name */
             name: string;
@@ -416,7 +482,7 @@ export interface components {
         };
         /** AMArtistRelationships */
         AMArtistRelationships: {
-            albums: components["schemas"]["AMAlbum"];
+            albums: components["schemas"]["AMAlbums"];
         };
         /** AMArtists */
         AMArtists: {
@@ -451,12 +517,85 @@ export interface components {
             /** Width */
             width: number;
         };
+        /**
+         * AMItemType
+         * @enum {string}
+         */
+        AMItemType: "songs" | "artists" | "playlists" | "albums" | "music-videos";
+        /** AMMusicVideo */
+        AMMusicVideo: {
+            /**
+             * Id
+             * @default
+             */
+            id: string;
+            /** @default songs */
+            type: components["schemas"]["AMItemType"];
+            /** Href */
+            href: string;
+            attributes: components["schemas"]["AMMusicVideoAttributes"];
+        };
+        /** AMMusicVideoAttributes */
+        AMMusicVideoAttributes: {
+            /**
+             * Albumname
+             * @default
+             */
+            albumName: string;
+            /**
+             * Artistname
+             * @default
+             */
+            artistName: string;
+            artwork?: components["schemas"]["AMArtwork"] | null;
+            /**
+             * Discnumber
+             * @default 0
+             */
+            discNumber: number;
+            /** Has4K */
+            has4K: boolean;
+            /** Hashdr */
+            hasHDR: boolean;
+            /** Durationinmillis */
+            durationInMillis?: number | null;
+            /** Genrenames */
+            genreNames: string[];
+            /**
+             * Isrc
+             * @default
+             */
+            isrc: string;
+            /** Name */
+            name: string;
+            playParams?: components["schemas"]["PlayParams"] | null;
+            /**
+             * Previews
+             * @default []
+             */
+            previews: components["schemas"]["MusicVideoPreview"][];
+            /**
+             * Releasedate
+             * @default
+             */
+            releaseDate: string;
+            /**
+             * Tracknumber
+             * @default 0
+             */
+            trackNumber: number;
+            /** Url */
+            url: string;
+        };
         /** AMPlaylist */
         AMPlaylist: {
-            /** Id */
-            id?: string | null;
-            /** Type */
-            type?: string | null;
+            /**
+             * Id
+             * @default
+             */
+            id: string;
+            /** @default playlists */
+            type: components["schemas"]["AMItemType"];
             /** Href */
             href: string;
             attributes: components["schemas"]["AMPlaylistAttributes"];
@@ -473,20 +612,32 @@ export interface components {
             curatorName: string;
             description?: components["schemas"]["Description"] | null;
             editorialNotes?: components["schemas"]["EditorialNotes"] | null;
-            /** Editorialplaylistkind */
+            /**
+             * Editorialplaylistkind
+             * @default
+             */
             editorialPlaylistKind: string;
             /** Hascollaboration */
             hasCollaboration: boolean;
             /** Ischart */
             isChart: boolean;
-            /** Lastmodifieddate */
+            /**
+             * Lastmodifieddate
+             * @default
+             */
             lastModifiedDate: string;
             /** Name */
             name: string;
-            playParams: components["schemas"]["PlayParams"];
-            /** Playlisttype */
+            playParams?: components["schemas"]["PlayParams"] | null;
+            /**
+             * Playlisttype
+             * @default
+             */
             playlistType: string;
-            /** Supportssing */
+            /**
+             * Supportssing
+             * @default false
+             */
             supportsSing: boolean;
             /** Url */
             url: string;
@@ -497,13 +648,11 @@ export interface components {
             href: string;
             /** Next */
             next?: string | null;
-            /** Data */
+            /**
+             * Data
+             * @default []
+             */
             data: components["schemas"]["AMPlaylist"][];
-        };
-        /** AMRelationships */
-        AMRelationships: {
-            artists: components["schemas"]["AMArtists"];
-            tracks: components["schemas"]["AMSongs"];
         };
         /** AMSearchResp */
         AMSearchResp: {
@@ -516,34 +665,52 @@ export interface components {
         };
         /** AMSong */
         AMSong: {
-            /** Id */
-            id?: string | null;
-            /** Type */
-            type?: string | null;
+            /**
+             * Id
+             * @default
+             */
+            id: string;
+            /** @default songs */
+            type: components["schemas"]["AMItemType"];
             /** Href */
             href: string;
             attributes: components["schemas"]["AMSongAttributes"];
         };
         /** AMSongAttributes */
         AMSongAttributes: {
-            /** Albumname */
+            /**
+             * Albumname
+             * @default
+             */
             albumName: string;
-            /** Artistname */
+            /**
+             * Artistname
+             * @default
+             */
             artistName: string;
             artwork?: components["schemas"]["AMArtwork"] | null;
-            /** Audiolocale */
+            /**
+             * Audiolocale
+             * @default
+             */
             audioLocale: string;
             /**
              * Audiotraits
              * @default []
              */
             audioTraits: string[];
-            /** Composername */
+            /**
+             * Composername
+             * @default
+             */
             composerName: string;
-            /** Discnumber */
+            /**
+             * Discnumber
+             * @default 0
+             */
             discNumber: number;
             /** Durationinmillis */
-            durationInMillis: number;
+            durationInMillis?: number | null;
             extendedAssetUrls?: components["schemas"]["ExtendedAssetUrls"] | null;
             /** Genrenames */
             genreNames: string[];
@@ -557,19 +724,28 @@ export interface components {
             isMasteredForItunes: boolean;
             /** Isvocalattenuationallowed */
             isVocalAttenuationAllowed: boolean;
-            /** Isrc */
+            /**
+             * Isrc
+             * @default
+             */
             isrc: string;
             /** Name */
             name: string;
-            playParams: components["schemas"]["PlayParams"];
+            playParams?: components["schemas"]["PlayParams"] | null;
             /**
              * Previews
              * @default []
              */
             previews: components["schemas"]["Preview"][];
-            /** Releasedate */
+            /**
+             * Releasedate
+             * @default
+             */
             releaseDate: string;
-            /** Tracknumber */
+            /**
+             * Tracknumber
+             * @default 0
+             */
             trackNumber: number;
             /** Url */
             url: string;
@@ -578,17 +754,38 @@ export interface components {
         AMSongs: {
             /** Href */
             href: string;
-            /** Next */
-            next?: string | null;
+            /**
+             * Next
+             * @default
+             */
+            next: string;
             /**
              * Data
              * @default []
              */
             data: components["schemas"]["AMSong"][];
         };
+        /** AMTracks */
+        AMTracks: {
+            /** Href */
+            href: string;
+            /**
+             * Next
+             * @default
+             */
+            next: string;
+            /**
+             * Data
+             * @default []
+             */
+            data: (components["schemas"]["AMSong"] | components["schemas"]["AMMusicVideo"])[];
+        };
         /** Description */
         Description: {
-            /** Standard */
+            /**
+             * Standard
+             * @default
+             */
             standard: string;
         };
         /**
@@ -598,11 +795,20 @@ export interface components {
         DiscordPlayerModes: "normal" | "repeat" | "loop";
         /** EditorialNotes */
         EditorialNotes: {
-            /** Name */
-            name: string | null;
-            /** Short */
+            /**
+             * Name
+             * @default
+             */
+            name: string;
+            /**
+             * Short
+             * @default
+             */
             short: string;
-            /** Standard */
+            /**
+             * Standard
+             * @default
+             */
             standard: string;
         };
         /** ExtendedAssetUrls */
@@ -653,14 +859,34 @@ export interface components {
             /** Url */
             url: string;
         };
+        /** MusicVideoPreview */
+        MusicVideoPreview: {
+            /** Url */
+            url: string;
+            /**
+             * Hlsurl
+             * @default
+             */
+            hlsUrl: string;
+            artwork?: components["schemas"]["AMArtwork"] | null;
+        };
         /** PlayParams */
         PlayParams: {
-            /** Id */
+            /**
+             * Id
+             * @default
+             */
             id: string;
-            /** Kind */
+            /**
+             * Kind
+             * @default
+             */
             kind: string;
-            /** Versionhash */
-            versionHash?: string | null;
+            /**
+             * Versionhash
+             * @default
+             */
+            versionHash: string;
         };
         /** PlayerStateSchema */
         PlayerStateSchema: {
@@ -799,6 +1025,69 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AMAlbum"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    artist_api_v1_am_artist_get: {
+        parameters: {
+            query: {
+                id: string;
+                fetch_all?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AMArtist"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    playlist_api_v1_am_playlist_get: {
+        parameters: {
+            query: {
+                id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AMPlaylist"];
                 };
             };
             /** @description Validation Error */

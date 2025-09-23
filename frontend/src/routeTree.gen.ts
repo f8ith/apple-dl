@@ -9,17 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SearchRouteImport } from './routes/search'
 import { Route as JobsRouteImport } from './routes/jobs'
 import { Route as DiscordBotRouteImport } from './routes/discord-bot'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SearchTermRouteImport } from './routes/search.$term'
+import { Route as ArtistArtistIdRouteImport } from './routes/artist.$artistId'
 import { Route as AlbumAlbumIdRouteImport } from './routes/album.$albumId'
+import { Route as SearchTermSongsRouteImport } from './routes/search_.$term.songs'
+import { Route as SearchTermArtistsRouteImport } from './routes/search_.$term.artists'
+import { Route as SearchTermAlbumsRouteImport } from './routes/search_.$term.albums'
 
-const SearchRoute = SearchRouteImport.update({
-  id: '/search',
-  path: '/search',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const JobsRoute = JobsRouteImport.update({
   id: '/jobs',
   path: '/jobs',
@@ -35,9 +34,34 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SearchTermRoute = SearchTermRouteImport.update({
+  id: '/search/$term',
+  path: '/search/$term',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArtistArtistIdRoute = ArtistArtistIdRouteImport.update({
+  id: '/artist/$artistId',
+  path: '/artist/$artistId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AlbumAlbumIdRoute = AlbumAlbumIdRouteImport.update({
   id: '/album/$albumId',
   path: '/album/$albumId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchTermSongsRoute = SearchTermSongsRouteImport.update({
+  id: '/search_/$term/songs',
+  path: '/search/$term/songs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchTermArtistsRoute = SearchTermArtistsRouteImport.update({
+  id: '/search_/$term/artists',
+  path: '/search/$term/artists',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchTermAlbumsRoute = SearchTermAlbumsRouteImport.update({
+  id: '/search_/$term/albums',
+  path: '/search/$term/albums',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -45,55 +69,86 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/discord-bot': typeof DiscordBotRoute
   '/jobs': typeof JobsRoute
-  '/search': typeof SearchRoute
   '/album/$albumId': typeof AlbumAlbumIdRoute
+  '/artist/$artistId': typeof ArtistArtistIdRoute
+  '/search/$term': typeof SearchTermRoute
+  '/search/$term/albums': typeof SearchTermAlbumsRoute
+  '/search/$term/artists': typeof SearchTermArtistsRoute
+  '/search/$term/songs': typeof SearchTermSongsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/discord-bot': typeof DiscordBotRoute
   '/jobs': typeof JobsRoute
-  '/search': typeof SearchRoute
   '/album/$albumId': typeof AlbumAlbumIdRoute
+  '/artist/$artistId': typeof ArtistArtistIdRoute
+  '/search/$term': typeof SearchTermRoute
+  '/search/$term/albums': typeof SearchTermAlbumsRoute
+  '/search/$term/artists': typeof SearchTermArtistsRoute
+  '/search/$term/songs': typeof SearchTermSongsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/discord-bot': typeof DiscordBotRoute
   '/jobs': typeof JobsRoute
-  '/search': typeof SearchRoute
   '/album/$albumId': typeof AlbumAlbumIdRoute
+  '/artist/$artistId': typeof ArtistArtistIdRoute
+  '/search/$term': typeof SearchTermRoute
+  '/search_/$term/albums': typeof SearchTermAlbumsRoute
+  '/search_/$term/artists': typeof SearchTermArtistsRoute
+  '/search_/$term/songs': typeof SearchTermSongsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/discord-bot' | '/jobs' | '/search' | '/album/$albumId'
+  fullPaths:
+    | '/'
+    | '/discord-bot'
+    | '/jobs'
+    | '/album/$albumId'
+    | '/artist/$artistId'
+    | '/search/$term'
+    | '/search/$term/albums'
+    | '/search/$term/artists'
+    | '/search/$term/songs'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/discord-bot' | '/jobs' | '/search' | '/album/$albumId'
+  to:
+    | '/'
+    | '/discord-bot'
+    | '/jobs'
+    | '/album/$albumId'
+    | '/artist/$artistId'
+    | '/search/$term'
+    | '/search/$term/albums'
+    | '/search/$term/artists'
+    | '/search/$term/songs'
   id:
     | '__root__'
     | '/'
     | '/discord-bot'
     | '/jobs'
-    | '/search'
     | '/album/$albumId'
+    | '/artist/$artistId'
+    | '/search/$term'
+    | '/search_/$term/albums'
+    | '/search_/$term/artists'
+    | '/search_/$term/songs'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DiscordBotRoute: typeof DiscordBotRoute
   JobsRoute: typeof JobsRoute
-  SearchRoute: typeof SearchRoute
   AlbumAlbumIdRoute: typeof AlbumAlbumIdRoute
+  ArtistArtistIdRoute: typeof ArtistArtistIdRoute
+  SearchTermRoute: typeof SearchTermRoute
+  SearchTermAlbumsRoute: typeof SearchTermAlbumsRoute
+  SearchTermArtistsRoute: typeof SearchTermArtistsRoute
+  SearchTermSongsRoute: typeof SearchTermSongsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/search': {
-      id: '/search'
-      path: '/search'
-      fullPath: '/search'
-      preLoaderRoute: typeof SearchRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/jobs': {
       id: '/jobs'
       path: '/jobs'
@@ -115,11 +170,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/search/$term': {
+      id: '/search/$term'
+      path: '/search/$term'
+      fullPath: '/search/$term'
+      preLoaderRoute: typeof SearchTermRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/artist/$artistId': {
+      id: '/artist/$artistId'
+      path: '/artist/$artistId'
+      fullPath: '/artist/$artistId'
+      preLoaderRoute: typeof ArtistArtistIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/album/$albumId': {
       id: '/album/$albumId'
       path: '/album/$albumId'
       fullPath: '/album/$albumId'
       preLoaderRoute: typeof AlbumAlbumIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search_/$term/songs': {
+      id: '/search_/$term/songs'
+      path: '/search/$term/songs'
+      fullPath: '/search/$term/songs'
+      preLoaderRoute: typeof SearchTermSongsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search_/$term/artists': {
+      id: '/search_/$term/artists'
+      path: '/search/$term/artists'
+      fullPath: '/search/$term/artists'
+      preLoaderRoute: typeof SearchTermArtistsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search_/$term/albums': {
+      id: '/search_/$term/albums'
+      path: '/search/$term/albums'
+      fullPath: '/search/$term/albums'
+      preLoaderRoute: typeof SearchTermAlbumsRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -129,8 +219,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DiscordBotRoute: DiscordBotRoute,
   JobsRoute: JobsRoute,
-  SearchRoute: SearchRoute,
   AlbumAlbumIdRoute: AlbumAlbumIdRoute,
+  ArtistArtistIdRoute: ArtistArtistIdRoute,
+  SearchTermRoute: SearchTermRoute,
+  SearchTermAlbumsRoute: SearchTermAlbumsRoute,
+  SearchTermArtistsRoute: SearchTermArtistsRoute,
+  SearchTermSongsRoute: SearchTermSongsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

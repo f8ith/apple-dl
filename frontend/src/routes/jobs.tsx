@@ -5,13 +5,13 @@ import { Separator } from "@/components/ui/separator";
 import React, { useState, KeyboardEventHandler } from "react";
 import { Badge } from "@/components/ui/badge";
 import { useJobs } from "@/hooks/use-jobs";
-import JobsDetailDialog from "@/components/jobs-dialog";
-//import JobsDetailDialog from "@/components/jobs-dialog";
+import { JobsDetailDialog } from "@/components/jobs-dialog";
 
 export const Route = createFileRoute("/jobs")({
   component: Jobs,
 });
 
+// ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
 function Jobs() {
   const [url, setUrl] = useState("");
   const { jobs, useSubmitJob, useJobSubscription } = useJobs();
@@ -22,7 +22,7 @@ function Jobs() {
 
   const onKeyDown: KeyboardEventHandler<HTMLInputElement> = (e) => {
     if (e.key === "Enter") {
-      useSubmitJob.mutate({body: {url}});
+      useSubmitJob.mutate({ body: { url } });
     }
   };
 
@@ -32,7 +32,7 @@ function Jobs() {
   };
 
   return (
-    <main className="flex flex-col items-start container justify-start mb-auto p-8">
+    <div className="flex flex-col items-start justify-start mb-auto p-8 container">
       <div className="flex flex-row items-start w-full gap-4">
         <Input
           autoFocus={true}
@@ -42,7 +42,10 @@ function Jobs() {
           placeholder="url"
           id="url"
         />
-        <Button type="submit" onClick={(_) => useSubmitJob.mutate({body: {url}})}>
+        <Button
+          type="submit"
+          onClick={(_) => useSubmitJob.mutate({ body: { url } })}
+        >
           Add to queue
         </Button>
       </div>
@@ -95,15 +98,13 @@ function Jobs() {
               </React.Fragment>
             ))}
           </div>
-      <JobsDetailDialog
-        isOpen={isDialogOpen}
-        setOpen={setIsDialogOpen}
-        job={selectedJob}
-      ></JobsDetailDialog>
-
+          <JobsDetailDialog
+            isOpen={isDialogOpen}
+            setOpen={setIsDialogOpen}
+            job={selectedJob}
+          />
         </div>
-
       )}
-   </main>
+    </div>
   );
 }

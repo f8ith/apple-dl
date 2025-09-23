@@ -1,8 +1,9 @@
+from tkinter import W
 from typing import Any, Sequence
 from fastapi import APIRouter, HTTPException
 
 from ...apple_music.downloader import AM_ITEM_TYPES, apple_music
-from ...apple_music.models import AMAlbum, AMSearchResp
+from ...apple_music.models import AMAlbum, AMArtist, AMPlaylist, AMSearchResp
 
 router = APIRouter(prefix="/am")
 
@@ -22,4 +23,18 @@ async def album(id: str) -> Any:
     search = apple_music.get_album(id)
     if not search:
         raise HTTPException(404, detail="album not found")
+    return search
+
+@router.get("/artist", response_model=AMArtist)
+async def artist(id: str, fetch_all: bool = False) -> Any:
+    search = apple_music.get_artist(id, fetch_all=fetch_all)
+    if not search:
+        raise HTTPException(404, detail="artist not found")
+    return search
+
+@router.get("/playlist", response_model=AMPlaylist)
+async def playlist(id: str) -> Any:
+    search = apple_music.get_playlist(id)
+    if not search:
+        raise HTTPException(404, detail="playlist not found")
     return search

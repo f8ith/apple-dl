@@ -1,0 +1,7 @@
+services:
+  apple-dl-ui:
+    image: f8ith/apple-dl-ui:${TAG}
+
+  apple-dl-server:
+    image: f8ith/apple-dl-server:${TAG}
+ 

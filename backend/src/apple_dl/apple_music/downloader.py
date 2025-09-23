@@ -49,6 +49,9 @@ itunes = ItunesApi(
     apple_music.language,
 )
 
-downloader = Downloader(apple_music, itunes, output_path=cfg.MUSIC_DIR, overwrite=True)
-downloader.set_cdm()
-downloader_song = DownloaderSong(downloader=downloader)
+def create_downloader():
+    downloader = Downloader(apple_music, itunes, output_path=cfg.MUSIC_DIR, overwrite=True)
+    downloader.set_cdm()
+    downloader_song = DownloaderSong(downloader=downloader)
+
+    return downloader, downloader_song

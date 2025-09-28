@@ -1,4 +1,4 @@
-import {AddToDiscord} from "@/components/add-to-discord";
+import { AddToDiscord } from "@/components/add-to-discord";
 import { DownloadButton } from "@/components/download-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -60,27 +60,38 @@ function RouteComponent() {
 
   return (
     <main className="flex flex-col items-start justify-start p-8 gap-4 w-full">
-      <div className="flex flex-row">
+      <div className="flex flex-row w-full">
         {data.attributes && (
-          <div className="flex flex-row gap-4 items-center">
-            <div className="max-w-[16vh] max-h-[16vh]">
-              <img
-                className="left-0 top-0 max-w-[16vh] h-full object-cover object-center transition duration-50 rounded-lg"
-                loading="lazy"
-                src={amGetImage(data)}
-              ></img>
+          <>
+            <div className="flex flex-row gap-4 items-center">
+              <div className="max-w-[16vh] max-h-[16vh]">
+                <img
+                  className="left-0 top-0 max-w-[16vh] h-full object-cover object-center transition duration-50 rounded-lg"
+                  loading="lazy"
+                  src={amGetImage(data)}
+                ></img>
+              </div>
+              <div className="flex flex-col">
+                <p className="text-3xl">{data.attributes.name}</p>
+                {data.relationships?.artists.data[0] && (
+                  <Link
+                    to="/artist/$artistId"
+                    params={{ artistId: data.relationships.artists.data[0].id }}
+                  >
+                    <p className="text-left text-xl text-muted-foreground hover:underline">
+                      {`${data.attributes.artistName}`}
+                    </p>
+                  </Link>
+                )}
+              </div>
             </div>
-            <div className="flex flex-col">
-              <p className="text-3xl">{data.attributes.name}</p>
-              {data.relationships?.artists.data[0] &&
-                <Link to="/artist/$artistId" params={{ artistId: data.relationships.artists.data[0].id }}>
-                  <p className="text-left text-xl text-muted-foreground hover:underline">
-                    {`${data.attributes.artistName}`}
-                  </p>
-                </Link>
-              }
+            <div className="ml-auto self-end">
+              <div className="flex flex-row gap-4 items-center justify-between px-8 w-full">
+                <AddToDiscord url={data.attributes.url} type={data.type} />
+                <DownloadButton url={data.attributes.url} />
+              </div>
             </div>
-          </div>
+          </>
         )}
       </div>
       <div className="dark:scheme-dark flex flex-col items-center justify-center w-full max-h-[60vh] h-fit">
@@ -102,14 +113,18 @@ function RouteComponent() {
                   </TableCell>
                   <TableCell className="w-full">
                     <div className="flex flex-row gap-4 items-center">
-                     <div className="flex flex-col">
+                      <div className="flex flex-col">
                         <p>{item.attributes.name}</p>
-                        <p className="text-muted-foreground">{item.attributes.artistName}</p>
+                        <p className="text-muted-foreground">
+                          {item.attributes.artistName}
+                        </p>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    {item.attributes.durationInMillis ? millisToStr(item.attributes.durationInMillis) : ""}
+                    {item.attributes.durationInMillis
+                      ? millisToStr(item.attributes.durationInMillis)
+                      : ""}
                   </TableCell>
                   <TableCell className="flex flex-row gap-2 justify-end">
                     <AddToDiscord url={item.attributes.url} type={item.type} />

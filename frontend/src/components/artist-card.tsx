@@ -13,7 +13,7 @@ interface ArtistCardProps {
 export function ArtistCard({ item, navigate, className }: ArtistCardProps) {
   return (
     item.attributes && (
-      <div className={cn(className, "max-w-xs min-w-3xs flex flex-col rounded-lg hover:bg-accent hover:cursor-pointer")}>
+      <div className={cn("max-w-xs min-w-3xs flex flex-col rounded-lg hover:bg-accent hover:cursor-pointer", className)}>
         <div
           className="flex flex-col gap-4 items-start p-2"
           onClick={() => {

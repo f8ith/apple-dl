@@ -152,7 +152,7 @@ async def download_url(
     if output_path:
         cmd += f" --output-path={output_path}"
 
-    print(cmd)
+    logger.info(cmd)
     proc = await asyncio.create_subprocess_shell(
         cmd,
         shell=True,
@@ -182,7 +182,6 @@ async def consume(queue: asyncio.Queue[GamdlJob]):
         item = await queue.get()
         loop = asyncio.get_running_loop()
 
-        #job_result = GamdlJobResult(await download_url(item.url, item.output_path))
         downloader, downloader_song = create_downloader()
         download_queue = downloader.get_download_queue(item.url_info)
 
@@ -196,9 +195,15 @@ async def consume(queue: asyncio.Queue[GamdlJob]):
                     logger.info(f"downloading {id}")
 
                     with concurrent.futures.ThreadPoolExecutor() as pool:
-                        info = await loop.run_in_executor(pool, functools.partial(downloader_song.download, media_metadata=media_metadata, playlist_attributes=download_queue.playlist_attributes, playlist_track=download_index))
+                        info_gen = await loop.run_in_executor(pool, functools.partial(downloader_song.download, media_metadata=media_metadata, playlist_attributes=download_queue.playlist_attributes, playlist_track=download_index))
 
-                    results.append(info)
+                    for info in info_gen:
+                        if not info.final_path or not info.media_metadata:
+                            # Invalid DownloadInfo?
+                            continue
+                        if not info:
+                            raise ValueError("no download info")
+                        results.append(info)
 
             except (
                 MediaNotStreamableException,
@@ -217,9 +222,13 @@ async def consume(queue: asyncio.Queue[GamdlJob]):
         # Notify the queue that the item has been processed
         queue.task_done()
 
+        if not results:
+            error = ValueError("download info results is empty")
+
         item.job_result = error if error else results
 
         item.job_completed.set()
+
         await notify_job_done(item.id)
 
 

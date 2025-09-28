@@ -29,7 +29,7 @@ export function SearchTabs({}: SearchTabProps) {
   ];
 
   return (
-    <div className="sticky top-0 flex flex-row items-start gap-4">
+    <div className="flex flex-row items-start gap-4">
       {Tabs.map((tab) => (
         <Button
           key={tab.name}

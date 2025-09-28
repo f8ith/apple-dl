@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -241,4 +241,20 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+::-webkit-scrollbar {
+  @apply w-[8px] h-[8px];
+}
+
+::-webkit-scrollbar-track {
+  @apply rounded-xl bg-background
+}
+
+::-webkit-scrollbar-thumb {
+  @apply rounded-xl bg-secondary
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-zinc-700;
 }

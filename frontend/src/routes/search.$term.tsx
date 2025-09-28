@@ -7,6 +7,7 @@ import { components } from "@/openapi-schema";
 import { SongCard } from "@/components/song-card";
 import { AlbumCard } from "@/components/album-card";
 import { ArtistCard } from "@/components/artist-card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const Route = createFileRoute("/search/$term")({
   component: Search,
@@ -34,12 +35,12 @@ function Search() {
   );
 
   return (
-    <div className="flex flex-col items-start justify-start grow-1 p-8 gap-4">
+    <div className="flex flex-col items-start justify-start grow-1 p-8 gap-4 max-w-screen min-w-0">
       <SearchTabs />
       <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight">
         Songs
       </h1>
-      <div className="dark:scheme-dark grid grid-auto-cols grid-flow-col grid-rows-2 max-h-[30vh] max-w-[90vw] overflow-x-scroll gap-4 p-4">
+      <div className="dark:scheme-dark grid grid-auto-cols grid-flow-col grid-rows-2 max-h-[30vh] w-full overflow-x-scroll gap-4 p-4">
         {useSearchQuery.isSuccess &&
           useSearchQuery.data.pages[0].songs?.data.map((item, index) => (
             <SongCard item={item} key={index} />
@@ -48,19 +49,27 @@ function Search() {
       <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight">
         Albums
       </h1>
-      <div className="dark:scheme-dark grid grid-auto-cols grid-flow-col grid-rows-1 max-w-[95vw] overflow-x-hidden gap-4 p-4">
+      <div className="dark:scheme-dark flex flex-row w-full overflow-hidden gap-4 p-4">
         {useSearchQuery.isSuccess &&
           useSearchQuery.data.pages[0].albums?.data.map((item, index) => (
-            <AlbumCard className="max-w-[400px] min-w-xs" navigate={navigate} item={item} key={index} />
+            <AlbumCard
+              navigate={navigate}
+              item={item}
+              key={index}
+            />
           ))}
       </div>
       <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight">
         Artists
       </h1>
-      <div className="dark:scheme-dark grid grid-cols-2 md:grid-cols-l lg:grid-cols-8 grid-rows-1 max-w-[95vw] overflow-x-hidden gap-4 p-4">
+      <div className="dark:scheme-dark flex flex-row w-full overflow-hidden gap-4 p-4">
         {useSearchQuery.isSuccess &&
           useSearchQuery.data.pages[0].artists?.data.map((item, index) => (
-            <ArtistCard navigate={navigate} item={item} key={index} />
+            <ArtistCard
+              navigate={navigate}
+              item={item}
+              key={index}
+            />
           ))}
       </div>
     </div>

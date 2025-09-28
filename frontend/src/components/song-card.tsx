@@ -12,7 +12,7 @@ interface SongCardProps {
 export function SongCard({ item, className }: SongCardProps) {
   return (
     item.attributes && (
-      <div className={cn(className, "flex flex-col rounded-lg border hover:bg-accent min-w-sm")}>
+      <div className={cn(className, "max-w-xs min-w-3xs flex flex-col rounded-lg border hover:bg-accent min-w-sm")}>
         <div className="flex flex-row gap-4 items-center p-2">
           <div className="w-32 h-32 shrink-0 p-2">
             <img
@@ -22,7 +22,7 @@ export function SongCard({ item, className }: SongCardProps) {
             ></img>
           </div>
           <div className="flex flex-col gap-2">
-            <CardTitle>{item.attributes.name}</CardTitle>
+            <CardTitle className="line-clamp-2">{item.attributes.name}</CardTitle>
             <CardDescription>{amGetShortLabel(item)}</CardDescription>
           </div>
         </div>

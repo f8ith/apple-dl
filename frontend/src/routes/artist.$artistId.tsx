@@ -50,56 +50,66 @@ function RouteComponent() {
   }
 
   return (
-    <main className="flex flex-col items-start justify-start p-8 gap-4 w-full">
-      <div className="flex flex-row">
+    <main className="flex flex-col items-start justify-start min-w-0 max-w-screen">
+      <div className="flex flex-col w-full">
         {data.attributes && (
-          <div className="flex flex-row gap-4 items-center">
-            <div>
+          <>
+            <div className="flex justify-center items-center w-full">
               <img
-                className="left-0 top-0 w-full h-full object-cover object-center transition duration-50"
+                className="w-[16%] h-[16%] my-[4%] object-cover object-center transition duration-50 rounded-full"
                 loading="lazy"
                 src={amGetImage(data, 3000, 1000)}
               ></img>
-              <div className="relative">
-                <div className="absolute bottom-2 left-2 flex flex-col">
-                  <p className="text-3xl">{data.attributes.name}</p>
+            </div>
+            <div className="relative">
+              <div className="absolute bottom-0 left-0 flex flex-col w-full">
+                <div className="flex flex-row gap-4 items-center justify-between px-8 w-full">
+                  <div>
+                    <p className="scroll-m-20 text-8xl font-bold tracking-tight">
+                      {data.attributes.name}
+                    </p>
+                  </div>
+                  <div></div>
+                  <div></div>
                 </div>
               </div>
             </div>
-          </div>
+          </>
         )}
       </div>
-      <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight pt-8">
-        Discography
-      </h1>
-      <div className="dark:scheme-dark grid grid-auto-cols grid-flow-col grid-rows-1 max-w-[95vw] overflow-x-scroll gap-4 p-4">
-        {data.relationships &&
-          data.relationships.albums?.data
-            .filter((item) => !item.attributes?.isSingle)
-            .map((item, index) => (
-              <AlbumCard
-                className="max-w-[400px] min-w-xs"
-                navigate={navigate}
-                item={item}
-                key={index}
-              />
-            ))}
-      </div>
-      <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight pt-8">
-        Singles & EP
-      </h1>
-      <div className="dark:scheme-dark grid grid-auto-cols grid-flow-col grid-rows-1 max-w-[95vw] overflow-x-scroll gap-4 p-4">
-        {data.relationships &&
-          data.relationships.albums?.data
-            .filter((item) => item.attributes?.isSingle)
-            .map((item, index) => (
-              <AlbumCard
-                className="max-w-[400px] min-w-xs"
-                navigate={navigate}
-                item={item}
-                key={index}
-              />
-            ))}
+      <div className="flex flex-col items-start justify-start gap-4 p-8 w-full">
+        <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight pt-8">
+          Discography
+        </h1>
+        <div className="dark:scheme-dark grid grid-auto-cols grid-flow-col grid-rows-1 w-full overflow-x-scroll gap-4 p-4">
+          {data.relationships &&
+            data.relationships.albums?.data
+              .filter((item) => !item.attributes?.isSingle)
+              .map((item, index) => (
+                <AlbumCard
+                  className="max-w-[400px] min-w-xs"
+                  navigate={navigate}
+                  item={item}
+                  key={index}
+                />
+              ))}
+        </div>
+        <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight pt-8">
+          Singles & EP
+        </h1>
+        <div className="dark:scheme-dark grid grid-auto-cols grid-flow-col grid-rows-1 w-full overflow-x-scroll gap-4 p-4">
+          {data.relationships &&
+            data.relationships.albums?.data
+              .filter((item) => item.attributes?.isSingle)
+              .map((item, index) => (
+                <AlbumCard
+                  className="max-w-[400px] min-w-xs"
+                  navigate={navigate}
+                  item={item}
+                  key={index}
+                />
+              ))}
+        </div>
       </div>
     </main>
   );

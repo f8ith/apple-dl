@@ -13,7 +13,7 @@ interface AlbumCardProps {
 export function AlbumCard({ item, navigate, className }: AlbumCardProps) {
   return (
     item.attributes && (
-      <div className={cn(className, "flex flex-col rounded-lg hover:bg-accent hover:cursor-pointer")}>
+      <div className={cn(className, "max-w-xs min-w-3xs flex flex-col rounded-lg hover:bg-accent hover:cursor-pointer")}>
         <div
           className="flex flex-col gap-4 items-start p-2"
           onClick={() => {
@@ -31,7 +31,7 @@ export function AlbumCard({ item, navigate, className }: AlbumCardProps) {
             ></img>
           </div>
           <div className="flex flex-col gap-2">
-            <CardTitle>{item.attributes.name}</CardTitle>
+            <CardTitle className="line-clamp-2">{item.attributes.name}</CardTitle>
             <CardDescription>{amGetShortLabel(item)}</CardDescription>
           </div>
         </div>

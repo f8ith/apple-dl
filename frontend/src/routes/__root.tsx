@@ -1,6 +1,7 @@
 import { Navbar } from "@/components/navbar";
 import {PlaybackBar} from "@/components/playback-bar";
 import { SecondarySidebar } from "@/components/secondary-sidebar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { LayoutProvider } from "@/providers/layout-provider";
 import { SocketProvider } from "@/providers/socket-provider";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
@@ -16,7 +17,9 @@ export const Route = createRootRoute({
             <div className="flex flex-col w-screen">
               <Navbar />
               <div className="flex pt-[6vh] pb-[8vh]">
-                <Outlet />
+                <div className="dark:scheme-dark scroll-mt-[16vh] scroll-pt-[16vh] max-h-[85vh] w-screen overflow-y-auto">
+                  <Outlet />
+                </div>
                 <SecondarySidebar />
               </div>
             </div>

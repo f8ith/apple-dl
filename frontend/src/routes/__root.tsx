@@ -1,7 +1,6 @@
 import { Navbar } from "@/components/navbar";
 import {PlaybackBar} from "@/components/playback-bar";
 import { SecondarySidebar } from "@/components/secondary-sidebar";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { LayoutProvider } from "@/providers/layout-provider";
 import { SocketProvider } from "@/providers/socket-provider";
 import { createRootRoute, Outlet } from "@tanstack/react-router";

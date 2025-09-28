@@ -7,7 +7,6 @@ import { useLayout } from "@/hooks/use-layout";
 import { TabsContent } from "@radix-ui/react-tabs";
 import { DiscordQueue } from "./discord-queue";
 import { SecondarySidebarTabs } from "@/contexts/layout-context";
-import { ScrollArea } from "./ui/scroll-area";
 
 export function SecondarySidebar() {
   const { playerStateOptions } = useDiscord();

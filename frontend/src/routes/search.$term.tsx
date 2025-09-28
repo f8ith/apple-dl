@@ -7,7 +7,6 @@ import { components } from "@/openapi-schema";
 import { SongCard } from "@/components/song-card";
 import { AlbumCard } from "@/components/album-card";
 import { ArtistCard } from "@/components/artist-card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const Route = createFileRoute("/search/$term")({
   component: Search,

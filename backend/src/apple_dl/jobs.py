@@ -1,58 +1,34 @@
 import asyncio
-import concurrent.futures
-import functools
 import itertools
 from os import PathLike
 from typing import Any, List, Sequence, Tuple
 import urllib.parse
 
-from apple_dl.schemas.job_schemas import GamdlJobResultSchema, GamdlJobSchema
-from gamdl.models import DownloadInfo
-from gamdl.exceptions import MediaFileAlreadyExistsException, MediaFormatNotAvailableException, MediaNotStreamableException
+from gamdl.downloader import UrlInfo, DownloadItem
+from gamdl.downloader.exceptions import MediaNotStreamableError
 
-from .apple_music.downloader import apple_music, create_downloader, parse_url_info_utf8
+from apple_dl.schemas.job_schemas import GamdlJobResultSchema, GamdlJobSchema
+
+from .apple_music.downloader import create_apple_music, create_downloader
 from .config import cfg
 from .logger import logger
 from .routers.websocket import notify_job_done
 
+# TODO: Downloader might cause issues with stale requests
+apple_music = create_apple_music()
+downloader = create_downloader(apple_music)
 
 class GamdlJob:
     id_iter = itertools.count()
 
-    def __init__(self, url: str, output_path: PathLike | None = None):
+    def __init__(self, url: str, url_info: UrlInfo, url_type: str, media_id: str, media_info, output_path: PathLike | None = None):
         self.id = next(self.id_iter)
         self.url = url
-
-        url_info = parse_url_info_utf8(url)
-
-        if not url_info:
-            raise ValueError(f"unable to parse {urllib.parse.unquote(self.url)}")
-
         self.url_info = url_info
+        self.url_type = url_type
 
-        self.media_id = self.url_info.sub_id or self.url_info.id or self.url_info.library_id
-        self.url_type = "song" if self.url_info.sub_id else self.url_info.type
-
-        if self.url_type == "song":
-            media_info = apple_music.get_song(self.media_id)
-        elif self.url_type in ("album", "albums"):
-            if self.url_info.library_id:
-                media_info = apple_music.get_library_album(self.media_id)
-            else:
-                media_info = apple_music.get_album(self.media_id)
-        elif self.url_type == "music-video":
-            media_info = apple_music.get_music_video(self.media_id)
-        elif self.url_type == "playlist":
-            media_info = apple_music.get_music_video(self.media_id)
-        else:
-            raise ValueError("only songs, albums, playlists and videos allowed")
-
-        if not media_info:
-            raise ValueError(f"unable to retrieve media_info for {self.url}")
-
+        self.media_id = media_id
         self.media_info: dict[str, Any] = media_info
-
-
         self.album_name = self.media_info["attributes"].get("albumName")
         self.artist_name = self.media_info["attributes"].get("artistName")
         self.name = self.media_info["attributes"].get("name")
@@ -63,7 +39,46 @@ class GamdlJob:
         self.track_number = self.media_info["attributes"].get("trackNumber")
         self.output_path = output_path
         self.job_completed = asyncio.Event()
-        self.job_result: Sequence[DownloadInfo] | Exception | None = None
+        self.job_result: Sequence[DownloadItem] | Exception | None = None
+
+
+    @classmethod
+    async def create(cls, url: str, output_path: PathLike | None = None):
+
+        url_info = downloader.get_url_info(url)
+        #parse_url_info_utf8(url)
+
+        if not url_info:
+            raise ValueError(f"unable to parse {urllib.parse.unquote(url)}")
+
+        url_info = url_info
+
+        media_id = url_info.sub_id or url_info.id or url_info.library_id
+        url_type = "song" if url_info.sub_id else url_info.type
+
+        if url_type == "song":
+            media_info_resp = await apple_music.get_song(media_id)
+        elif url_type in ("album", "albums"):
+            if url_info.library_id:
+                media_info_resp = await apple_music.get_library_album(media_id)
+            else:
+                media_info_resp = await apple_music.get_album(media_id)
+        elif url_type == "music-video":
+            media_info_resp = await apple_music.get_music_video(media_id)
+        elif url_type == "playlist":
+            media_info_resp = await apple_music.get_music_video(media_id)
+        else:
+            raise ValueError("only songs, albums, playlists and videos allowed")
+
+        if not media_info_resp:
+            raise ValueError(f"unable to retrieve media_info for {url}")
+
+        media_info = media_info_resp.get("data")
+
+        if not media_info:
+            raise ValueError(f"invalid media_info for {url}")
+
+        return cls(url, url_info, url_type, media_id, media_info[0], output_path)
 
     def __pydantic__(self):
         ret = GamdlJobSchema(
@@ -167,7 +182,7 @@ async def download_url(
 
 
 async def create_job_task(url: str, output_path: PathLike | None = None) -> GamdlJob:
-    gamdl_job = GamdlJob(url, output_path)
+    gamdl_job = await GamdlJob.create(url, output_path)
     jobs.append(gamdl_job)
     await job_queue.put(gamdl_job)
     return gamdl_job
@@ -182,42 +197,39 @@ async def consume(queue: asyncio.Queue[GamdlJob]):
         item = await queue.get()
         loop = asyncio.get_running_loop()
 
-        downloader, downloader_song = create_downloader()
-        download_queue = downloader.get_download_queue(item.url_info)
+        #downloader = create_downloader(apple_music)
+        #download_queue = downloader.get_download_queue(item.url_info)
 
-        for download_index, media_metadata in enumerate(
-            download_queue.medias_metadata,
-            start=1,
-        ):
-            try:
-                if media_metadata["type"] in {"songs", "library-songs"}:
-                    # TODO write my own function, get info without redownloading songs
-                    logger.info(f"downloading {id}")
+        download_queue = await downloader.get_download_queue(item.url_info)
 
-                    with concurrent.futures.ThreadPoolExecutor() as pool:
-                        info_gen = await loop.run_in_executor(pool, functools.partial(downloader_song.download, media_metadata=media_metadata, playlist_attributes=download_queue.playlist_attributes, playlist_track=download_index))
+        if download_queue:
+            for download_item in download_queue:
+                if (isinstance(download_item, Exception)):
+                    logger.warning(
+                        f"({item.name}) {download_item} encountered error, skipping",
+                    )
+                    continue
 
-                    for info in info_gen:
-                        if not info.final_path or not info.media_metadata:
-                            # Invalid DownloadInfo?
-                            continue
-                        if not info:
-                            raise ValueError("no download info")
-                        results.append(info)
+                try:
+                    if download_item.media_metadata["type"] in {"songs", "library-songs"}:
+                        # TODO write my own function, get info without redownloading songs
+                        logger.info(f"downloading {id}")
 
-            except (
-                MediaNotStreamableException,
-                MediaFileAlreadyExistsException,
-                MediaFormatNotAvailableException,
-            ) as e:
-                logger.warning(
-                    f"({item.name}) {e}, skipping",
-                )
-            except Exception as e:
-                logger.error(
-                    f'failed to download "{item.name}"',
-                )
-                error = e
+                        await downloader.download(download_item)
+                        results.append(download_item)
+                except (
+                    MediaNotStreamableError
+                ) as e:
+                    logger.warning(
+                        f"({item.name}) {e}, is not streamable skipping",
+                    )
+                except Exception as e:
+                    logger.error(
+                        f'failed to download "{item.name}"',
+                    )
+                    error = e
+        else:
+            error = ValueError("download queue is empty")
 
         # Notify the queue that the item has been processed
         queue.task_done()
@@ -244,8 +256,6 @@ async def start_consumers() -> None:
 async def stop_consumers() -> None:
     for consumer in consumers:
         consumer.cancel()
-
-    # await asyncio.gather(*consumers, return_exceptions=True)
 
 
 def job_state():

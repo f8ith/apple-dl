@@ -6,7 +6,8 @@ from typing import Deque
 import discord
 from discord import Member, Guild, VoiceClient
 from discord.ext import commands
-from gamdl.models import DownloadInfo, MediaType
+from gamdl.downloader import DownloadItem
+from gamdl.interface import MediaType
 
 from apple_dl.config import cfg
 from apple_dl.routers.websocket import player_queue_changed, player_state_changed
@@ -16,20 +17,20 @@ from apple_dl.utils import truncated_uuid4
 class Song:
     id_iter = itertools.count()
 
-    def __init__(self, job_result: DownloadInfo):
+    def __init__(self, job_result: DownloadItem):
         # TODO Handle albums, playlists etc.
         self.id = next(self.id_iter)
 
         self.album_name = job_result.media_metadata["attributes"].get("albumName")
         self.artist_name = job_result.media_metadata["attributes"].get("artistName")
         self.name = job_result.media_metadata["attributes"].get("name")
-        self.lyrics = job_result.lyrics.unsynced
-        self.synced_lyrics = job_result.lyrics.synced
-        self.track_number = job_result.tags.track
-        self.type = job_result.tags.media_type
+        self.lyrics = job_result.lyrics.unsynced if job_result.lyrics else ""
+        self.synced_lyrics = job_result.lyrics.synced if job_result.lyrics else ""
+        self.track_number = job_result.media_tags.track
+        self.type = job_result.media_tags.media_type
         self.filepath = job_result.final_path
         self.length = job_result.media_metadata.get("attributes", {}).get("durationInMillis", 0)
-        self.image = job_result.cover_url
+        self.image = job_result.media_metadata["attributes"].get("artwork", {}).get("url", "")
         self.url = "" #TODO URL
 
         if not self.type in [MediaType.SONG]:
@@ -84,7 +85,7 @@ class DiscordAudioSource(discord.FFmpegOpusAudio):
 
         before_options = f'-ss {self.counter / 1000} ' + before_options
         options = f'-filter:a "volume={player.volume}" ' + options
-        super().__init__(source=self.filepath.absolute().as_posix(),before_options=before_options, options=options, bitrate=bitrate)
+        super().__init__(source=self.filepath, before_options=before_options, options=options, bitrate=bitrate)
 
     def read(self) -> bytes:
         # add the time here

@@ -12,13 +12,13 @@ class AMItemType(str, Enum):
 
 
 class AMArtwork(BaseModel):
-    bgColor: str
-    hasP3: bool
+    bgColor: str = ""
+    hasP3: bool = False
     height: int
-    textColor1: str
-    textColor2: str
-    textColor3: str
-    textColor4: str
+    textColor1: str = ""
+    textColor2: str = ""
+    textColor3: str = ""
+    textColor4: str = ""
     url: str
     width: int
 
@@ -86,16 +86,18 @@ class ExtendedAssetUrls(BaseModel):
 class Preview(BaseModel):
     url: str
 
+
 class MusicVideoPreview(Preview):
     hlsUrl: str = ""
     artwork: AMArtwork | None = None
+
 
 class AMMusicVideoAttributes(BaseModel):
     albumName: str = ""
     artistName: str = ""
     artwork: AMArtwork | None = None
     discNumber: int = 0
-    has4K: bool 
+    has4K: bool
     hasHDR: bool
     durationInMillis: int | None = None
     genreNames: List[str]
@@ -113,6 +115,7 @@ class AMMusicVideo(BaseModel):
     type: AMItemType = AMItemType.songs
     href: str
     attributes: AMMusicVideoAttributes
+
 
 class AMSongAttributes(BaseModel):
     albumName: str = ""
@@ -145,15 +148,18 @@ class AMSong(BaseModel):
     href: str
     attributes: AMSongAttributes
 
+
 class AMSongs(BaseModel):
     href: str
     next: str = ""
     data: List[AMSong] = []
 
+
 class AMTracks(BaseModel):
     href: str
     next: str = ""
     data: List[AMSong | AMMusicVideo] = []
+
 
 class AMAlbumRelationships(BaseModel):
     artists: AMArtists
@@ -193,6 +199,16 @@ class Description(BaseModel):
     standard: str = ""
 
 
+class AMPlaylistCurator(BaseModel):
+    href: str
+    data: List
+
+
+class AMPlaylistRelationships(BaseModel):
+    curator: AMPlaylistCurator | None = None
+    tracks: AMTracks
+
+
 class AMPlaylistAttributes(BaseModel):
     artwork: AMArtwork | None = None
     audioTraits: List[str] = []
@@ -215,6 +231,7 @@ class AMPlaylist(BaseModel):
     type: AMItemType = AMItemType.playlists
     href: str
     attributes: AMPlaylistAttributes
+    relationships: AMPlaylistRelationships | None = None
 
 
 class AMPlaylists(BaseModel):

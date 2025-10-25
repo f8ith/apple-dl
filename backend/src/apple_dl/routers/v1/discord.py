@@ -137,7 +137,6 @@ async def post_queue(request: Request, job_req: JobReq):
     job = await create_job_task(job_req.url, cfg.MUSIC_DIR)
 
     # TODO: do not wait for whole album?
-    # TODO: only one song is added?? in whole album 
     # TODO: skip music videos in an album 
     await asyncio.wait_for(job.job_completed.wait(), 120)
 

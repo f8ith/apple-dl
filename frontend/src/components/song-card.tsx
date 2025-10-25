@@ -12,7 +12,7 @@ interface SongCardProps {
 export function SongCard({ item, className }: SongCardProps) {
   return (
     item.attributes && (
-      <div className={cn("max-w-xs min-w-3xs flex flex-col rounded-lg border hover:bg-accent min-w-sm", className)}>
+      <div className={cn("flex flex-col rounded-lg border hover:bg-accent min-w-sm max-w-xs", className)}>
         <div className="flex flex-row gap-4 items-center p-2">
           <div className="w-32 h-32 shrink-0 p-2">
             <img

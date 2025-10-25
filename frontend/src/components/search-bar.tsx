@@ -9,34 +9,56 @@ export function SearchBar() {
     "searchText",
     ""
   );
-  const [didInteract, setDidInteract] = useState(false);
   const [debouncedTerm, setDebouncedTerm] = useDebounceValue(searchText, 500);
+  const [didInteract, setDidInteract] = useState(false);
 
-  const isSongs = useMatch({ from: '/search_/$term/songs', shouldThrow: false })
+  const isSongs = useMatch({
+    from: "/search_/$term/songs",
+    shouldThrow: false,
+  });
+
+  const isAlbums = useMatch({
+    from: "/search_/$term/albums",
+    shouldThrow: false,
+  });
+
+  const isArtists = useMatch({
+    from: "/search_/$term/artists",
+    shouldThrow: false,
+  });
+
+  const isPlaylists = useMatch({
+    from: "/search_/$term/playlists",
+    shouldThrow: false,
+  });
 
   const navigate = useNavigate();
 
-  const searchTo = () => {
-    if (isSongs)
-      return "/search/$term/songs"
 
-    return "/search/$term"
-  }
+  const searchTo = () => {
+    if (isSongs) return "/search/$term/songs";
+    else if (isAlbums) return "/search/$term/albums";
+    else if (isArtists) return "/search/$term/artists";
+    else if (isPlaylists) return "/search/$term/playlists";
+
+    return "/search/$term";
+  };
+
 
   const triggerNavigate = () => {
-    if (debouncedTerm != "" && didInteract) {
+    if (debouncedTerm != "") {
       navigate({ to: searchTo(), params: { term: debouncedTerm } });
     }
-    setDidInteract(false);
-  }
+  };
 
   const onSubmit: React.FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
     triggerNavigate();
-  }
+  };
 
   useEffect(() => {
-    triggerNavigate()
+    if (didInteract)
+      triggerNavigate();
   }, [debouncedTerm]);
 
   return (
@@ -49,9 +71,6 @@ export function SearchBar() {
           setDidInteract(true);
           setSearchText(e.target.value);
           setDebouncedTerm(e.target.value);
-        }}
-        onSubmit={() => {
-          console.log("submitted");
         }}
         placeholder="url, albums, songs..."
         id="url"

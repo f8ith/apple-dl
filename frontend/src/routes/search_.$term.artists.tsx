@@ -59,10 +59,15 @@ function RouteComponent() {
               ref={scrollRef}
               className="dark:scheme-dark max-h-[68vh] overflow-y-auto grow-1 w-full my-[2vh]"
             >
-              <div className="grid grid-cols-2 md:grid-cols-l lg:grid-cols-8 gap-4 p-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 p-4">
                 {useSearchQuery.data.pages.flatMap((group, i) =>
                   group.artists?.data.map((item, index) => (
-                    <ArtistCard item={item} navigate={navigate} key={i*PAGESIZE + index} />
+                    <ArtistCard
+                      className="min-w-0"
+                      item={item}
+                      navigate={navigate}
+                      key={i * PAGESIZE + index}
+                    />
                   ))
                 )}
               </div>

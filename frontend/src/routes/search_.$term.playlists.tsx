@@ -1,19 +1,19 @@
-import {  useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { Button } from "@/components/ui/button";
 
-import { SearchTabs } from "@/components/search-tabs";
-import { components } from "@/openapi-schema";
 import { $api, PAGESIZE } from "@/lib/api";
-import { AlbumCard } from "@/components/album-card";
+import { components } from "@/openapi-schema";
+import { SearchTabs } from "@/components/search-tabs";
+import { PlaylistCard } from "@/components/playlist-card";
 
-export const Route = createFileRoute("/search_/$term/albums")({
+export const Route = createFileRoute("/search_/$term/playlists")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const navigate = useNavigate({ from: "/search/$term/albums" });
+  const navigate = useNavigate({ from: "/search/$term/playlists" });
   const scrollRef = useRef<HTMLDivElement>(null);
   const { term } = Route.useParams();
 
@@ -27,7 +27,7 @@ function RouteComponent() {
       getNextPageParam: (lastPage: components["schemas"]["AMSearchResp"]) => {
         if (lastPage.offset == null || lastPage.offset == undefined)
           return null;
-        return lastPage.albums?.next ? lastPage.offset + 25 : null;
+        return lastPage.songs?.next ? lastPage.offset + PAGESIZE : null;
       },
       initialPageParam: 0,
       pageParamName: "offset",
@@ -53,7 +53,7 @@ function RouteComponent() {
     <div className="flex flex-col items-start justify-start grow-1 p-8">
       <SearchTabs />
       {useSearchQuery.isSuccess ? (
-        useSearchQuery.data.pages[0].albums && (
+        useSearchQuery.data.pages[0].playlists && (
           <>
             <div
               ref={scrollRef}
@@ -61,8 +61,13 @@ function RouteComponent() {
             >
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 2xl:grid-cols-8 gap-4 p-4">
                 {useSearchQuery.data.pages.flatMap((group, i) =>
-                  group.albums?.data.map((item, index) => (
-                    <AlbumCard className="min-w-0" item={item} navigate={navigate} key={i * PAGESIZE + index} />
+                  group.playlists?.data.map((item, index) => (
+                    <PlaylistCard
+                      className="min-w-0"
+                      item={item}
+                      navigate={navigate}
+                      key={i * PAGESIZE + index}
+                    />
                   ))
                 )}
               </div>

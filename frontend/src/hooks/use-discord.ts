@@ -6,7 +6,8 @@ import { TItemType } from "@/lib/apple-music";
 import { components, paths } from "@/openapi-schema";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSessionStorage } from "usehooks-ts";
-import { socket } from "@/lib/socket";
+
+let didInit = false
 
 export function useDiscord() {
   const [playerId, _setPlayerId, removePlayerId] = useSessionStorage<string>("player_id", "");
@@ -23,9 +24,14 @@ export function useDiscord() {
   const [discordEnabled, setDiscordEnabled] = useState(playerId != "");
 
   const connect = useCallback(() => {
+    if (playerId && !didInit) {
+      console.log(`registering to room ${playerId}`)
+      emitEvent("register_player_id", { "player-id": playerId });
+      didInit = true;
+    }
+
     if (discordEnabled) return;
     setDiscordEnabled(true);
-    emitEvent("register_player_id", { "player-id": playerId });
   }, [setDiscordEnabled, emitEvent, playerId, discordEnabled]);
 
   const disconnect = useCallback(() => {
@@ -109,10 +115,6 @@ export function useDiscord() {
   const usePlayerStateSubscription = () => {
     const queryClient = useQueryClient();
 
-    socket.emit("register_player_id", {
-      "player-id": playerId
-    })
-
     useEffect(() => {
       console.log("register player state");
       registerHandler(
@@ -135,13 +137,16 @@ export function useDiscord() {
     }, [queryClient]);
   };
 
+  // TODO: Fix queue updates
   const useQueueSubscription = () => {
     const queryClient = useQueryClient();
+
     useEffect(() => {
       console.log("register queue state");
       registerHandler(
         "player_queue_changed",
         (newState: paths["/api/v1/discord/queue"]["get"]["responses"]["200"]["content"]["application/json"]) => {
+          console.log("queue updated")
           queryClient.setQueriesData(
             {
               queryKey: [

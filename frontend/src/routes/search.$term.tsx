@@ -7,6 +7,7 @@ import { components } from "@/openapi-schema";
 import { SongCard } from "@/components/song-card";
 import { AlbumCard } from "@/components/album-card";
 import { ArtistCard } from "@/components/artist-card";
+import { PlaylistCard } from "@/components/playlist-card";
 
 export const Route = createFileRoute("/search/$term")({
   component: Search,
@@ -33,13 +34,14 @@ function Search() {
     }
   );
 
+  // TODO: Make song card + overall font sizes more responsive
   return (
     <div className="flex flex-col items-start justify-start grow-1 p-8 gap-4 max-w-screen min-w-0">
       <SearchTabs />
       <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight">
         Songs
       </h1>
-      <div className="dark:scheme-dark grid grid-auto-cols grid-flow-col grid-rows-2 max-h-[30vh] w-full overflow-x-scroll gap-4 p-4">
+      <div className="dark:scheme-dark grid grid-auto-cols grid-flow-col grid-rows-2 w-full overflow-x-scroll gap-4 p-4">
         {useSearchQuery.isSuccess &&
           useSearchQuery.data.pages[0].songs?.data.map((item, index) => (
             <SongCard item={item} key={index} />
@@ -71,6 +73,20 @@ function Search() {
             />
           ))}
       </div>
+      <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight">
+        Playlists
+      </h1>
+      <div className="dark:scheme-dark flex flex-row w-full overflow-hidden gap-4 p-4">
+        {useSearchQuery.isSuccess &&
+          useSearchQuery.data.pages[0].playlists?.data.map((item, index) => (
+            <PlaylistCard
+              navigate={navigate}
+              item={item}
+              key={index}
+            />
+          ))}
+      </div>
+ 
     </div>
   );
 }

@@ -26,6 +26,12 @@ export function SearchTabs({}: SearchTabProps) {
       route: "/search/$term/artists",
       match: useMatch({ from: "/search_/$term/artists", shouldThrow: false }),
     },
+    {
+      name: "playlists",
+      route: "/search/$term/playlists",
+      match: useMatch({ from: "/search_/$term/playlists", shouldThrow: false }),
+
+    }
   ];
 
   return (

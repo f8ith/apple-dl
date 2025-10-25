@@ -13,9 +13,11 @@ import { Route as JobsRouteImport } from './routes/jobs'
 import { Route as DiscordBotRouteImport } from './routes/discord-bot'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SearchTermRouteImport } from './routes/search.$term'
+import { Route as PlaylistPlaylistIdRouteImport } from './routes/playlist.$playlistId'
 import { Route as ArtistArtistIdRouteImport } from './routes/artist.$artistId'
 import { Route as AlbumAlbumIdRouteImport } from './routes/album.$albumId'
 import { Route as SearchTermSongsRouteImport } from './routes/search_.$term.songs'
+import { Route as SearchTermPlaylistsRouteImport } from './routes/search_.$term.playlists'
 import { Route as SearchTermArtistsRouteImport } from './routes/search_.$term.artists'
 import { Route as SearchTermAlbumsRouteImport } from './routes/search_.$term.albums'
 
@@ -39,6 +41,11 @@ const SearchTermRoute = SearchTermRouteImport.update({
   path: '/search/$term',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlaylistPlaylistIdRoute = PlaylistPlaylistIdRouteImport.update({
+  id: '/playlist/$playlistId',
+  path: '/playlist/$playlistId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ArtistArtistIdRoute = ArtistArtistIdRouteImport.update({
   id: '/artist/$artistId',
   path: '/artist/$artistId',
@@ -52,6 +59,11 @@ const AlbumAlbumIdRoute = AlbumAlbumIdRouteImport.update({
 const SearchTermSongsRoute = SearchTermSongsRouteImport.update({
   id: '/search_/$term/songs',
   path: '/search/$term/songs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchTermPlaylistsRoute = SearchTermPlaylistsRouteImport.update({
+  id: '/search_/$term/playlists',
+  path: '/search/$term/playlists',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SearchTermArtistsRoute = SearchTermArtistsRouteImport.update({
@@ -71,9 +83,11 @@ export interface FileRoutesByFullPath {
   '/jobs': typeof JobsRoute
   '/album/$albumId': typeof AlbumAlbumIdRoute
   '/artist/$artistId': typeof ArtistArtistIdRoute
+  '/playlist/$playlistId': typeof PlaylistPlaylistIdRoute
   '/search/$term': typeof SearchTermRoute
   '/search/$term/albums': typeof SearchTermAlbumsRoute
   '/search/$term/artists': typeof SearchTermArtistsRoute
+  '/search/$term/playlists': typeof SearchTermPlaylistsRoute
   '/search/$term/songs': typeof SearchTermSongsRoute
 }
 export interface FileRoutesByTo {
@@ -82,9 +96,11 @@ export interface FileRoutesByTo {
   '/jobs': typeof JobsRoute
   '/album/$albumId': typeof AlbumAlbumIdRoute
   '/artist/$artistId': typeof ArtistArtistIdRoute
+  '/playlist/$playlistId': typeof PlaylistPlaylistIdRoute
   '/search/$term': typeof SearchTermRoute
   '/search/$term/albums': typeof SearchTermAlbumsRoute
   '/search/$term/artists': typeof SearchTermArtistsRoute
+  '/search/$term/playlists': typeof SearchTermPlaylistsRoute
   '/search/$term/songs': typeof SearchTermSongsRoute
 }
 export interface FileRoutesById {
@@ -94,9 +110,11 @@ export interface FileRoutesById {
   '/jobs': typeof JobsRoute
   '/album/$albumId': typeof AlbumAlbumIdRoute
   '/artist/$artistId': typeof ArtistArtistIdRoute
+  '/playlist/$playlistId': typeof PlaylistPlaylistIdRoute
   '/search/$term': typeof SearchTermRoute
   '/search_/$term/albums': typeof SearchTermAlbumsRoute
   '/search_/$term/artists': typeof SearchTermArtistsRoute
+  '/search_/$term/playlists': typeof SearchTermPlaylistsRoute
   '/search_/$term/songs': typeof SearchTermSongsRoute
 }
 export interface FileRouteTypes {
@@ -107,9 +125,11 @@ export interface FileRouteTypes {
     | '/jobs'
     | '/album/$albumId'
     | '/artist/$artistId'
+    | '/playlist/$playlistId'
     | '/search/$term'
     | '/search/$term/albums'
     | '/search/$term/artists'
+    | '/search/$term/playlists'
     | '/search/$term/songs'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -118,9 +138,11 @@ export interface FileRouteTypes {
     | '/jobs'
     | '/album/$albumId'
     | '/artist/$artistId'
+    | '/playlist/$playlistId'
     | '/search/$term'
     | '/search/$term/albums'
     | '/search/$term/artists'
+    | '/search/$term/playlists'
     | '/search/$term/songs'
   id:
     | '__root__'
@@ -129,9 +151,11 @@ export interface FileRouteTypes {
     | '/jobs'
     | '/album/$albumId'
     | '/artist/$artistId'
+    | '/playlist/$playlistId'
     | '/search/$term'
     | '/search_/$term/albums'
     | '/search_/$term/artists'
+    | '/search_/$term/playlists'
     | '/search_/$term/songs'
   fileRoutesById: FileRoutesById
 }
@@ -141,9 +165,11 @@ export interface RootRouteChildren {
   JobsRoute: typeof JobsRoute
   AlbumAlbumIdRoute: typeof AlbumAlbumIdRoute
   ArtistArtistIdRoute: typeof ArtistArtistIdRoute
+  PlaylistPlaylistIdRoute: typeof PlaylistPlaylistIdRoute
   SearchTermRoute: typeof SearchTermRoute
   SearchTermAlbumsRoute: typeof SearchTermAlbumsRoute
   SearchTermArtistsRoute: typeof SearchTermArtistsRoute
+  SearchTermPlaylistsRoute: typeof SearchTermPlaylistsRoute
   SearchTermSongsRoute: typeof SearchTermSongsRoute
 }
 
@@ -177,6 +203,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SearchTermRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/playlist/$playlistId': {
+      id: '/playlist/$playlistId'
+      path: '/playlist/$playlistId'
+      fullPath: '/playlist/$playlistId'
+      preLoaderRoute: typeof PlaylistPlaylistIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/artist/$artistId': {
       id: '/artist/$artistId'
       path: '/artist/$artistId'
@@ -196,6 +229,13 @@ declare module '@tanstack/react-router' {
       path: '/search/$term/songs'
       fullPath: '/search/$term/songs'
       preLoaderRoute: typeof SearchTermSongsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search_/$term/playlists': {
+      id: '/search_/$term/playlists'
+      path: '/search/$term/playlists'
+      fullPath: '/search/$term/playlists'
+      preLoaderRoute: typeof SearchTermPlaylistsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/search_/$term/artists': {
@@ -221,9 +261,11 @@ const rootRouteChildren: RootRouteChildren = {
   JobsRoute: JobsRoute,
   AlbumAlbumIdRoute: AlbumAlbumIdRoute,
   ArtistArtistIdRoute: ArtistArtistIdRoute,
+  PlaylistPlaylistIdRoute: PlaylistPlaylistIdRoute,
   SearchTermRoute: SearchTermRoute,
   SearchTermAlbumsRoute: SearchTermAlbumsRoute,
   SearchTermArtistsRoute: SearchTermArtistsRoute,
+  SearchTermPlaylistsRoute: SearchTermPlaylistsRoute,
   SearchTermSongsRoute: SearchTermSongsRoute,
 }
 export const routeTree = rootRouteImport

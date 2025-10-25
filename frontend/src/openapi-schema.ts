@@ -599,6 +599,7 @@ export interface components {
             /** Href */
             href: string;
             attributes: components["schemas"]["AMPlaylistAttributes"];
+            relationships?: components["schemas"]["AMPlaylistRelationships"] | null;
         };
         /** AMPlaylistAttributes */
         AMPlaylistAttributes: {
@@ -641,6 +642,18 @@ export interface components {
             supportsSing: boolean;
             /** Url */
             url: string;
+        };
+        /** AMPlaylistCurator */
+        AMPlaylistCurator: {
+            /** Href */
+            href: string;
+            /** Data */
+            data: unknown[];
+        };
+        /** AMPlaylistRelationships */
+        AMPlaylistRelationships: {
+            curator?: components["schemas"]["AMPlaylistCurator"] | null;
+            tracks: components["schemas"]["AMTracks"];
         };
         /** AMPlaylists */
         AMPlaylists: {
@@ -1042,7 +1055,7 @@ export interface operations {
         parameters: {
             query: {
                 id: string;
-                fetch_all?: boolean;
+                limit?: number;
             };
             header?: never;
             path?: never;
@@ -1074,6 +1087,7 @@ export interface operations {
         parameters: {
             query: {
                 id: string;
+                limit_tracks?: number;
             };
             header?: never;
             path?: never;

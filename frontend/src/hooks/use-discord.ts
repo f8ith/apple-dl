@@ -116,7 +116,6 @@ export function useDiscord() {
     const queryClient = useQueryClient();
 
     useEffect(() => {
-      console.log("register player state");
       registerHandler(
         "player_state_changed",
         (newState: components["schemas"]["PlayerStateSchema"]) => {
@@ -142,7 +141,6 @@ export function useDiscord() {
     const queryClient = useQueryClient();
 
     useEffect(() => {
-      console.log("register queue state");
       registerHandler(
         "player_queue_changed",
         (newState: paths["/api/v1/discord/queue"]["get"]["responses"]["200"]["content"]["application/json"]) => {

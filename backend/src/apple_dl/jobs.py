@@ -213,7 +213,7 @@ async def consume(queue: asyncio.Queue[GamdlJob]):
                 try:
                     if download_item.media_metadata["type"] in {"songs", "library-songs"}:
                         # TODO write my own function, get info without redownloading songs
-                        logger.info(f"downloading {id}")
+                        logger.info(f"downloading {item.url}")
 
                         await downloader.download(download_item)
                         results.append(download_item)

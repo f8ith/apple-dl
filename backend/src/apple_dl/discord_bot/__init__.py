@@ -1,7 +1,7 @@
 import asyncio
+import logging
 
 import discord
-from discord.ext import commands
 
 from apple_dl.config import cfg
 from apple_dl.discord_bot.bot import DiscordBot

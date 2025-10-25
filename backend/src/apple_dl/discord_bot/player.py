@@ -255,6 +255,7 @@ class DiscordPlayerManager:
                 player.queue.appendleft(song)
             else:
                 player.queue.append(song)
+            asyncio.run_coroutine_threadsafe(self.emit_queue_update(player), player.ctx.bot.loop)
 
     async def play_next(self, player: DiscordPlayerState, id: int):
         for song in player.queue:

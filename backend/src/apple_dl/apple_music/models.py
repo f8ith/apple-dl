@@ -212,7 +212,7 @@ class AMPlaylistRelationships(BaseModel):
 class AMPlaylistAttributes(BaseModel):
     artwork: AMArtwork | None = None
     audioTraits: List[str] = []
-    curatorName: str
+    curatorName: str = ""
     description: Description | None = None
     editorialNotes: EditorialNotes | None = None
     editorialPlaylistKind: str = ""
